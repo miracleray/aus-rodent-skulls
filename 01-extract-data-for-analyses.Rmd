@@ -5,7 +5,7 @@ date: "9/17/2018"
 output: html_document
 ---
 
-```{r setup, include=FALSE}
+```{r setup, include = FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
@@ -22,9 +22,9 @@ library(data.table)
 
 ## Load the data 
 ```{r}
-setwd("~/Documents/Ariel's Folder/Research/3 Australian Rodent Evo/Chp3_Crania_Morph/data/3_coordinate_data")
-my_data <- read.csv("18_07_20_7Roundsminus20.csv", header = T)
+my_data <- read.csv("data/18_07_20_7Roundsminus20.csv", header = T)
 ```
+Note that the data is loaded in using a relative directory - not a setwd command. This allows others who have cloned this repo of code and data to still use the code out of the box. 
 
 ## Create metadata table
 ```{r}
@@ -54,19 +54,12 @@ sp_info <- Metadata(A, cols)
 ```
 
 ## Create shape matrices for each patch protocol
-Our methodology tested whether different patch protocols impact later shape analyses. To save time, we digitized the patches at the same time we have two different patch protocols to 
+Our methodology tested whether different patch protocols impact later shape analyses. To save time, we digitized the patches at the same time so we have two different patch protocols to extract from the same shape coordinate file. 
 
 
-# Create LM point name metadata
+### Create LM point name metadata
+```{r}
 pt_names <-my_data[, 1]
 foo2 <- str_sub(pt_names, 3, -1)
 u_pt_names<- unique(foo2)
-
-
-You can also embed plots, for example:
-
-```{r pressure, echo=FALSE}
-plot(pressure)
 ```
-
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
