@@ -1,12 +1,11 @@
-### Branched from Methodology R Script on 30 Jan 2018
-### Created to analyze preliminary template data to find mean specimen
+### Created to find mean species from 36 rodent species using template from 3d-vs-ct-scanning project (Marcy et al. 2018). The mean species found with this script will be used to create a new template for this project characterizing rodent morphology.
 
 library(geomorph)
 
 # Read in data file and get it into format that geomorph recognizes
 my_data <- read.csv(file.choose(), header = T) #choose the 18_01_30_AusRodentPhase1.csv file
 
-# This file already has problem LMs deleted, leaving 58 landmarks, 145 semilandmarks, and 86 patches for a total of 289 points
+# This file already has problem landmarks deleted, leaving 58 landmarks, 145 semilandmarks, and 86 patches for a total of 289 points
 
 data <- my_data[, 2:(dim(my_data)[2])] #gets rid of LM names for geomorph formatting reasons
 data<-t(data)
