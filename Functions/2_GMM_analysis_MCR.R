@@ -107,7 +107,7 @@ write.csv(curve_names, "curve_names.csv")
 ## manually input which LMs go before the max # curve point and after curve point #1
 LM_key <- read.csv("curve_LM_key.csv", header = T)
 
-### A function that replaces before and after column numbers with the correct landmark numbers
+### Write a function that replaces before and after column numbers with the correct landmark numbers
 ## requires a list of point names extracted from the coordinate data
 ## reguires a user-created key with columns:
 # "Curve": unique curves (L and R sides should not be duplicated)

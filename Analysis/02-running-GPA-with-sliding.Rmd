@@ -7,7 +7,14 @@ output: html_document
 
 ```{r setup, include = FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-knitr::opts_chunk$get("root.dir")
+knitr::opts_knit$set(root.dir = '../aus-rodent-skulls')
+```
+
+## Load in data from previous step
+This command loads the .Rda files with objects from the previous script, 01-extract-data-for-analyses.Rmd.
+```{r}
+load(file = "../Data/Results/01_big_patch_data.rda")
+load(file = "../Data/Results/01_small_patch_data.rda")
 ```
 
 # Running GPA in Geomorph with patches and sliding semi-landmarks
