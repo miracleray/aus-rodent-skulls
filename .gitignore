@@ -1,2 +1,10 @@
+## Compiled ignore
+*.pdf
+*.html
 
-.here
+## R ignore
+*.Rhistory
+*.Rda
+*.rda
+*.RData
+*.Rapp.history
