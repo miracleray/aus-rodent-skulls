@@ -1,5 +1,5 @@
 ---
-title: "02-running-GPA-with-sliding"
+title: "02-run-GPA-with-sliding"
 author: "Ariel Marcy"
 date: "9/17/2018"
 output: html_document
@@ -19,7 +19,7 @@ library(geomorph)
 ```
 
 ### Load data from previous step
-Use .Rda files with objects from the previous script, 01-extract-data-for-analyses.Rmd.
+Use .rda files with objects from the previous script, 01-extract-data-for-analyses.Rmd.
 ```{r}
 load(file = "../Data/Results/01_big_patch_data.rda")
 load(file = "../Data/Results/01_small_patch_data.rda")
@@ -101,6 +101,8 @@ The first function, 'Give_LMs()', puts the correct landmark numbers in the slide
 * index, an integer vector corresponding to the curve points in the curve (allows function to handle curves of different lengths)
 * pt_names, a character list of point names, for example only those included in a patch protocol
 * matrix, a slider matrix with 3 columns to be edited, like the one created by the function 'DummySlider()'
+
+'Give_LMs()' returns a slider matrix with corrected landmark numbers for one curve - given by row number, i - at a time. 
 ```{r}
 Give_LMs <- function(i, index, pt_names, key, matrix){
                 
@@ -132,13 +134,15 @@ Give_LMs <- function(i, index, pt_names, key, matrix){
 
 The second function, 'Write_Slider()' handles the information in the LM_key to direct the function, 'Give_LMs()' above. It expects:
 * a character list of point names
-* the user-generated character matrix, which came from curve_LM_key.csv, with the column listing unique curve names called "Curve"
+* the user-generated character matrix - ours came from curve_LM_key.csv - with the column listing unique curve names called "Curve"
 * a 3-column slider matrix with columns Before, Slider, and After in that order, initiated by 'Dummy_Slider()' above.
+
+'Write_Slider()' returns a completed slider matrix.
 ```{r}
 ## A function that replaces before and after column numbers with the correct landmark numbers
 Write_Slider <- function(pt_names, key, matrix){
         
-        # Function cycles through unique curves in the template
+        # Cycles through unique curve names in the template
         for (i in 1:length(key$Curve)){  #i passed to Give_LMs()
                 curve <- as.character(key$Curve[i]) 
                 
@@ -149,10 +153,10 @@ Write_Slider <- function(pt_names, key, matrix){
                         index <- which(str_detect(pt_names, curve))
                         test_LR <- str_sub(pt_names[min(index)], -3, -3)
                         
-                        # Test for and handle center-line curves
+                        # Tests for and handles center-line curves
                         if (test_LR != "L" & test_LR != "R"){
                                 matrix <- Give_LMs(i, index, pt_names, key, matrix)
-                        } else { # Handles bilateral curves, expecting that the reverse alphametical order the coordinates come in lists the R side points immediately before the L side points
+                        } else { # Handles bilateral curves, expecting the coordinates in reverse alphabetical order that lists the R side points immediately before the L side points
                                 midpt <- length(index)/2
                                 R_index <- index[1:midpt]
                                 L_index <- index[(midpt + 1):(midpt*2)]
@@ -173,10 +177,11 @@ sm_sli_matrix <- Write_Slider(sm_pt_names, LM_key, sm_cur_matrix)
 
 ## Run GPA with sliding curves and patches
 Now we have the necessary designations for _geomorph_ to treat each landmark correctly during GPA. We run it separately for each patch protocol. _geomorph_ refers to patch points as "surfaces".
-```{r message = FALSE}
+```{r}
 big_Y <- gpagen(B, Proj = TRUE, ProcD = TRUE, curves = big_sli_matrix, surfaces = big_pat_num)
 
 sm_Y <- gpagen(S, Proj = TRUE, ProcD = TRUE, curves = sm_sli_matrix, surfaces = sm_pat_num)
 
-save(big_Y, sm_Y, file = "02-GPA-data.rda")
+## Save intermediate data
+save(big_Y, sm_Y, file = "../Data/Results/02-GPA-data.rda")
 ```

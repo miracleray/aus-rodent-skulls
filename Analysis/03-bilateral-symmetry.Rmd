@@ -1,0 +1,107 @@
+---
+title: "03-find-bilateral-symmetry"
+author: "Ariel Marcy"
+date: "9/25/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = '../aus-rodent-skulls')
+```
+
+### Load packages
+```{r message = FALSE}
+library(stringr)
+library(stringi)
+library(data.table)
+library(geomorph)
+```
+
+### Load data from previous steps
+```{r}
+load(file = "../Data/Results/01_big_patch_data.rda")
+load(file = "../Data/Results/01_small_patch_data.rda")
+load(file = "../Data/Results/02-GPA-data.rda")
+```
+
+## Extract symmetric component of shape data
+We found in Marcy et al. 2018, that using bilateral shape data improved the reliability of landmarking for small 3D-scanned skulls.   
+
+To use _geomorph_'s 'bilat.symmetry()' function, we needed to write a function to find the bilateral landmark pairs. The function, 'Find_Pairs()' only expects a list of point names in the protocol. We assumed the user included R and L for side and numbered the curve and patch points in a mirror-image pattern relative to one another.
+```{r}
+## Function to create table of bilateral points for bilat.symmetry()
+Find_Pairs <- function(pt_names){
+        # Initiates table with correct format
+        pairs <- data.table("Right" = numeric(), "Left" = numeric())
+        
+        # Removes R and L designations so pairs can be detected
+        no_side_names <- gsub(" R", "", pt_names)
+        no_side_names <- gsub(" L", "", no_side_names)
+        
+        # Checks if point has a pair and if so, their index #s are paired
+        for(i in unique(no_side_names)){
+                index <- str_detect(no_side_names, i)
+                if (sum(index) == 2) {
+                        new_pair <- which(index == TRUE)
+                        pairs <- rbind(pairs, as.list(new_pair))
+                } 
+        }
+        return(pairs) #table ready for geomorph's bilat.symmetry()
+}
+
+## Find landmark pair tables for each protocol
+big_land_pairs <- Find_Pairs(big_pt_names)
+sm_land_pairs <- Find_Pairs(sm_pt_names)
+```
+
+### Run bilateral GPA
+Now we are ready to re-run the generalized Procrustes alignment using bilateral landmark designations, extract the symmetric component of shape, and make new metadata tables.
+
+The two bilateral GPAs can take some time (~10min total to run).
+```{r}
+## Perform bilateral procrustes alignment on each patch protocol
+big_biY <- bilat.symmetry(big_Y$coords, ind = big_sp_info$All, object.sym = T, replicate = NULL, side = NULL, land.pairs = big_land_pairs)
+
+# Extract symmetric component of shape data
+big_bY_ss <- big_biY$symm.shape # analogous to Y$coords, where Y is the output of gpagen()
+
+# Create new table of specimen information since the bilat function rearranges the coordinate array
+cols2 = c("Genus", "Species", "CatNum")
+big_bY_info <- Metadata(big_bY_ss, cols2)
+
+## Repeat steps above for small patch protocol
+sm_biY <- bilat.symmetry(sm_Y$coords, ind = sm_sp_info$All, object.sym = T, replicate = NULL, side = NULL, land.pairs = sm_land_pairs)
+sm_bY_ss <- sm_biY$symm.shape
+sm_bY_info <- Metadata(sm_bY_ss, cols2)
+```
+
+## Summarize results from bilateral symmetry analyses
+These results may be relevant for researchers interested in how much variation can be explained by symmetric variation among specimens, asymmetric variation among specimens, and fluctating asymmetry within specimens. 
+```{r}
+## Big patch protocol
+summary(big_biY)
+## Small patch protocol
+summary(sm_biY)
+```
+
+## Combine symmetric shape data with centroid size from gpagen()
+Here we create a 2-column table with Catalog Numbers and Centroid sizes, which allows us to combine the Centroid size with the metadata for the symmetric component of shape. 
+```{r}
+## Remove specimen filenames from dimnames of centroid size vectors and combine CatNum with centroid data
+big_CatSize <- as.data.table(cbind(as.vector(big_sp_info$CatNum), unname(big_Y$Csize)))
+names(big_CatSize) <- c("CatNum", "Csize")
+
+sm_CatSize <- as.data.table(cbind(as.vector(sm_sp_info$CatNum), unname(sm_Y$Csize)))
+names(sm_CatSize) <- c("CatNum", "Csize")
+
+## Merge Csize with bilateral metadata
+
+
+```
+
+### Save intermediate data
+```{r}
+save(big_biY, big_bY_ss, big_bY_info, big_CatSize, file = "../Data/Results/03-big-bilat-data.rda")
+save(sm_biY, sm_bY_ss, sm_bY_info, sm_CatSize, file = "03-sm-bilat-data.rda")
+```

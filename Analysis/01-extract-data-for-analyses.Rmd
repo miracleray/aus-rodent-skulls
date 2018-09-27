@@ -1,5 +1,5 @@
 ---
-title: "01-data-extraction-for-analyses"
+title: "01-extract-data-for-analyses"
 author: "Ariel Marcy"
 date: "9/17/2018"
 output: html_document
@@ -22,11 +22,16 @@ library(data.table)
 library(geomorph)
 ```
 
-### Load the data 
+### Load shape data and take out the "burn-in" specimens
+_Note that the data is loaded in using a relative directory - not a setwd command. This allows others who have cloned this repo of code and data to still use the code out of the box._
+
+## Handle specimens in dataset designed to reduce or measure user error
+First. to reduce user error, Ariel landmarked 20 specimens to familiarize herself with the template and re-landmarked those 20 later on. This is the standard "burn-in" number. Viewbox puts the most recent specimen in the first row of the output .csv file. 
 ```{r}
 coords3D <- read.csv("../Data/Raw/3D_coords.csv", header = T)
+
+coords3D <- coords3D[1:(length(coords3D)-20)] #removes 1st 20 landmarked
 ```
-_Note that the data is loaded in using a relative directory - not a setwd command. This allows others who have cloned this repo of code and data to still use the code out of the box._
 
 ## Create metadata table
 ```{r}

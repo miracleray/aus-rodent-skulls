@@ -1,0 +1,68 @@
+---
+title: "04-compare-patch-protocols"
+author: "Ariel Marcy"
+date: "9/26/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = '../aus-rodent-skulls')
+```
+
+### Load packages
+```{r message = FALSE}
+library(stringr)
+library(stringi)
+library(data.table)
+library(geomorph)
+```
+
+### Load data from previous steps
+```{r}
+load(file = "../Data/Results/01_big_patch_data.rda")
+load(file = "../Data/Results/01_small_patch_data.rda")
+load(file = "../Data/Results/02-GPA-data.rda")
+load(file = "../Data/Results/03-big-bilateral-data.rda")
+load(file = "../Data/Results/03-sm-bilateral-data.rda")
+```
+
+## Plot PCAs for each protocol
+PCAs allow visual comparison of how differently the patch protocols sort the shape data. 
+
+First, we wrote function to match colors to groups within the dataset. 'Group_w_Color()', creates a vector of colors matched to a group in the metadata. It expects:
+* metadata, a table of metadata for the shape data. In our workflow, it is usually created with the function 'Metadata()'
+* column, a character string which matches exactly the column name to be used as the group to be matched with colors
+* colorkey, a vector of colors listed in the same order as the unique group descriptors levels(as.factor(metadata$column))
+
+'Group_w_Color()' returns a vector of colors corresponding to the group descriptor of each individual in the metadata table, which can be used for plotting
+```{r}
+## Write function to match up colors to groups within the dataset
+Group_w_Color <- function(metadata, column, colorkey){
+        col_num <- which(dimnames(metadata)[[2]] == column)
+        grp <- as.factor(metadata[, col_num])
+        names(colorkey) <- levels(grp)
+        grp_col <- colkey[match(grp, names(colorkey))]
+        return(grp_col)
+}
+```
+
+We'll use this function to look at the morphospace colored by genus
+```{r}
+# Assign colors by genus
+col.gen <- c("red", "cornflowerblue", "light green", "dark blue", "yellow", "green", "grey", "blue", "magenta", "dark blue", "black", "darkgoldenrod4", "orange", "light blue")
+# Genus key: Hyd Leg Lep Mas Mel Mes Mus Not Pog Pse Rat Uro Xer Zyz
+
+sp_col.gen <- Group_w_Color(b_bY_info, Genus, col.gen)
+```
+
+
+```{r}
+## Plot PCAs
+b_pca <- plotTangentSpace(big_Y$coords, groups = big_col.gp, axis1 = 1, axis2 = 2, label = big_sp_info$CatNum, verbose = T)
+
+
+```
+
+
+
