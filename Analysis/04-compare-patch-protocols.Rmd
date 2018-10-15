@@ -1,5 +1,5 @@
 ---
-title: "04-compare-patch-protocols"
+title: "04-calculate-user-error"
 author: "Ariel Marcy"
 date: "9/26/2018"
 output: html_document
@@ -20,49 +20,47 @@ library(geomorph)
 
 ### Load data from previous steps
 ```{r}
-load(file = "../Data/Results/01_big_patch_data.rda")
-load(file = "../Data/Results/01_small_patch_data.rda")
+load(file = "../Data/Results/01-big-patch-data.rda")
+load(file = "../Data/Results/01-sm-patch-data.rda")
 load(file = "../Data/Results/02-GPA-data.rda")
-load(file = "../Data/Results/03-big-bilateral-data.rda")
-load(file = "../Data/Results/03-sm-bilateral-data.rda")
+load(file = "../Data/Results/03-big-bilat-data.rda")
+load(file = "../Data/Results/03-sm-bilat-data.rda")
 ```
 
-## Plot PCAs for each protocol
-PCAs allow visual comparison of how differently the patch protocols sort the shape data. 
+## Separate error measurement datasets from main datasets
+Now that the shape data have been processed via GPA and bilateral symmetry, we can separate the data intended to measure user error from the main data for the remaining analyses. 
 
-First, we wrote function to match colors to groups within the dataset. 'Group_w_Color()', creates a vector of colors matched to a group in the metadata. It expects:
-* metadata, a table of metadata for the shape data. In our workflow, it is usually created with the function 'Metadata()'
-* column, a character string which matches exactly the column name to be used as the group to be matched with colors
-* colorkey, a vector of colors listed in the same order as the unique group descriptors levels(as.factor(metadata$column))
-
-'Group_w_Color()' returns a vector of colors corresponding to the group descriptor of each individual in the metadata table, which can be used for plotting
+First, remove the replicates from the main shape data for both small and large patch protocols. Create corresponding metadata tables. These data will be used for the majority of remaining analyses.
 ```{r}
-## Write function to match up colors to groups within the dataset
-Group_w_Color <- function(metadata, column, colorkey){
-        col_num <- which(dimnames(metadata)[[2]] == column)
-        grp <- as.factor(metadata[, col_num])
-        names(colorkey) <- levels(grp)
-        grp_col <- colkey[match(grp, names(colorkey))]
-        return(grp_col)
-}
+main <- which(big_bY_info$Rep == "non")
+big_shape <- big_bY_ss[, , main]
+big_info <- big_bY_info[main, ]
+
+sm_shape <- sm_bY_ss[, , main] # main for small patch protocol is same as above, test with all.equal()
+sm_info <- sm_bY_info[main, ]
 ```
 
-We'll use this function to look at the morphospace colored by genus
+Second, create an error measurement dataset for both protocols that includes replicates and the specimens they duplicated (i.e. each CatNum should have two entries, one labeled "ERR", and one labled "non"). These data will be used to calculate user error. 
 ```{r}
-# Assign colors by genus
-col.gen <- c("red", "cornflowerblue", "light green", "dark blue", "yellow", "green", "grey", "blue", "magenta", "dark blue", "black", "darkgoldenrod4", "orange", "light blue")
-# Genus key: Hyd Leg Lep Mas Mel Mes Mus Not Pog Pse Rat Uro Xer Zyz
+## Find index for both versions of specimens with replicates using rep_spec list make in script 01.
+rep_CatNums <- as.character(str_sub(rep_spec, 9, -1)) # isolate CatNum
+error_data <- which(sm_bY_info$CatNum %in% rep_CatNums) # same for small and big patch protocols, can test with all.equal()
 
-sp_col.gen <- Group_w_Color(b_bY_info, Genus, col.gen)
+## Subset shape and metadata tables for each protcol
+big_err_shape <- big_bY_ss[, , error_data]
+big_info <- big_bY_info[error_data, ]
+
+sm_err_shape <- sm_bY_ss[, , error_data]
+sm_info <- sm_bY_info[error_data, ]
 ```
 
-
+## Calculate user error
 ```{r}
-## Plot PCAs
-b_pca <- plotTangentSpace(big_Y$coords, groups = big_col.gp, axis1 = 1, axis2 = 2, label = big_sp_info$CatNum, verbose = T)
-
 
 ```
 
 
-
+### Save intermediate data
+```{r}
+save(big_shape, big_info, sm_shape, sm_info, file = "../Data/Results/04-data-for-analyses.rda")
+```

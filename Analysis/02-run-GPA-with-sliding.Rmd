@@ -21,8 +21,8 @@ library(geomorph)
 ### Load data from previous step
 Use .rda files with objects from the previous script, 01-extract-data-for-analyses.Rmd.
 ```{r}
-load(file = "../Data/Results/01_big_patch_data.rda")
-load(file = "../Data/Results/01_small_patch_data.rda")
+load(file = "../Data/Results/01-big-patch-data.rda")
+load(file = "../Data/Results/01-sm-patch-data.rda")
 ```
 
 # Running GPA in Geomorph with patches and sliding semi-landmarks
@@ -44,14 +44,14 @@ _For example, "PAT auditory bulla R 3" and "PAT auditory bulla L 3" are in mirro
 ### ID curve and patch points
 First, we identify the point names and their associated index numbers. Importantly, index numbers will correspond to the order of 3D coordinates in the shape files, S and B. 
 ```{r}
-# Semi-landmark curves
+## Semi-landmark curves
 big_cur <- str_detect(big_pt_names, "SUR")
 big_cur_num <- which(big_cur == TRUE)
 
 sm_cur <- str_detect(sm_pt_names, "SUR")
 sm_cur_num <- which(sm_cur == TRUE)
 
-# Patch points
+## Patch points
 big_patches <- str_detect(big_pt_names, "PAT")
 big_pat_num <- which(big_patches == TRUE)
 
@@ -81,15 +81,15 @@ sm_cur_matrix <- Dummy_Slider(sm_cur_num)
 ### 2) Create table of landmark names bounding curves
 Of course, the dataset isn't one long curve and the index numbers for landmarks that bound each curve will not have a predictable pattern. So, we need to do a bit of manual work to tell R about our specific landmarking template.
 ```{r}
-# Create table to specify landmark names that bound curves
-curve_names <- unique(str_sub(sm_pt_names, 1, -5)) #this removes the point number and whether it is R or L
-curve_names <- curve_names[str_detect(curve_names, "SUR")] #narrows down to only curve names
+## Create table to specify landmark names that bound curves
+curve_names <- unique(str_sub(sm_pt_names, 1, -5)) # this removes the point number and whether it is R or L
+curve_names <- curve_names[str_detect(curve_names, "SUR")] # narrows down to only curve names
 write.csv(curve_names, "../Data/Processed/curve_names.csv")
 ```
 
 Now, for the 28 unique curves in the curve_names.csv, we manually wrote the landmark names that go before the max curve point and after the curve point's #1. For our rationale, refer to our template (Fig. TK). Once ready, we re-named it "curve_LM_key.csv"
 ```{r}
-# Import the finished key
+## Import the finished key
 LM_key <- read.csv("../Data/Processed/curve_LM_key.csv", header = T)
 ```
 
@@ -106,25 +106,25 @@ The first function, 'Give_LMs()', puts the correct landmark numbers in the slide
 ```{r}
 Give_LMs <- function(i, index, pt_names, key, matrix){
                 
-        bef_LM <- as.character(key$Before[i]) #Before landmark name
+        bef_LM <- as.character(key$Before[i]) # Before landmark name
         
-        # Checks if this landmark is bilateral and if so, appends the appropriate "R" or "L" so the correct landmark number is retrieved later
+        ## Checks if this landmark is bilateral and if so, appends the appropriate "R" or "L" so the correct landmark number is retrieved later
         if ((sum(str_detect(pt_names, bef_LM)) > 1)) {
                 side <- str_sub(pt_names[min(index)], -3, -3)
                 bef_LM <- paste(bef_LM, side, sep = " ")
         } 
-        # Finds & inserts landmark number in slider matrix Before column
+        ## Finds & inserts landmark number in slider matrix Before column
         LM_num <- which(str_detect(pt_names, bef_LM))
         matrix[min(index), 1] <- LM_num
                 
         aft_LM <- as.character(key$After[i]) #After landmark name
         
-        # Checks if this landmark is bilateral
+        ## Checks if this landmark is bilateral
         if (sum(str_detect(pt_names, aft_LM)) > 1) {
                 side <- str_sub(pt_names[min(index)], -3, -3)
                 aft_LM <- paste(aft_LM, side, sep = " ")
         } 
-        # Finds & inserts landmark number in After column
+        ## Finds & inserts landmark number in After column
         LM_num <- which(str_detect(pt_names, aft_LM))
         matrix[max(index), 3] <- LM_num
                 
@@ -142,21 +142,21 @@ The second function, 'Write_Slider()' handles the information in the LM_key to d
 ## A function that replaces before and after column numbers with the correct landmark numbers
 Write_Slider <- function(pt_names, key, matrix){
         
-        # Cycles through unique curve names in the template
-        for (i in 1:length(key$Curve)){  #i passed to Give_LMs()
+        ## Cycles through unique curve names in the template
+        for (i in 1:length(key$Curve)){  # i passed to Give_LMs()
                 curve <- as.character(key$Curve[i]) 
                 
-                # Checks to make sure more than 1 sliding pt in curve
-                # If so, gets the index numbers included in curve
-                # Also extracts letter which might indicate L or R
+                ## Checks to make sure more than 1 sliding pt in curve
+                ## If so, gets the index numbers included in curve
+                ## Also extracts letter which might indicate L or R
                 if (sum(str_detect(pt_names, curve) != 0)){
                         index <- which(str_detect(pt_names, curve))
                         test_LR <- str_sub(pt_names[min(index)], -3, -3)
                         
-                        # Tests for and handles center-line curves
+                        ## Tests for and handles center-line curves
                         if (test_LR != "L" & test_LR != "R"){
                                 matrix <- Give_LMs(i, index, pt_names, key, matrix)
-                        } else { # Handles bilateral curves, expecting the coordinates in reverse alphabetical order that lists the R side points immediately before the L side points
+                        } else { ## Handles bilateral curves, expecting the coordinates in reverse alphabetical order that lists the R side points immediately before the L side points
                                 midpt <- length(index)/2
                                 R_index <- index[1:midpt]
                                 L_index <- index[(midpt + 1):(midpt*2)]
@@ -165,11 +165,11 @@ Write_Slider <- function(pt_names, key, matrix){
                         }
                 }
         }
-        return(matrix) #finished slider matrix
+        return(matrix) # finished slider matrix
 }
 ```
 
-Now, creating the slider matrices for two different patch protocols only takes 2 lines of code:
+At last, creating the slider matrices for two different patch protocols only takes 2 lines of code:
 ```{r}
 big_sli_matrix <- Write_Slider(big_pt_names, LM_key, big_cur_matrix)
 sm_sli_matrix <- Write_Slider(sm_pt_names, LM_key, sm_cur_matrix)
