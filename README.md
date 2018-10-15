@@ -29,5 +29,6 @@ The analysis workflow is broken down into smaller scripts explained below. Each 
 
 * **01-extract-data-for-analyses.Rmd** Takes landmark data from Viewbox and prepares it for analysis in *geomorph*. Extracts both 3D coordinate data as well as the metadata about each specimen stored in the filename. Separates coordinate data into two datasets based on big or small patch protocol.
 * **02-run-GPA-with-sliding.Rmd** Prepares the matrices needed by *geomorph* to slide patch and curve semi-landmarks. Explains landmark naming conventions needed to use this script on different datasets. Runs GPA.
-* **03-find-bilateral-symmetry.Rmd** Runs GPA with bilateral symmetry and merges the symmetric shape output with centroid size data from the first GPA. 
-* **04-compare-patch-protocols.Rmd** Plots PCAs colored by genus to compare variation captured by the small and big patch protocols. 
+* **03-find-bilateral-symmetry.Rmd** Runs GPA with bilateral symmetry and merges the symmetric shape output with centroid size data from the first GPA.
+* **04-calculate-user-error.Rmd** Takes out replicated specimens from the shape data, finds their duplicates, and runs a simple user error analysis. Creates datasets without replicates used for the rest of the analyses.
+* **05-compare-patch-PCAs.Rmd** Plots PCAs colored by genus to compare the variation captured by small and big patch protocols. 
