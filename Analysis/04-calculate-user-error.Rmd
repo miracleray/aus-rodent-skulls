@@ -48,17 +48,50 @@ error_data <- which(sm_bY_info$CatNum %in% rep_CatNums) # same for small and big
 
 ## Subset shape and metadata tables for each protcol
 big_err_shape <- big_bY_ss[, , error_data]
-big_info <- big_bY_info[error_data, ]
+big_err_info <- big_bY_info[error_data, ]
 
 sm_err_shape <- sm_bY_ss[, , error_data]
-sm_info <- sm_bY_info[error_data, ]
+sm_err_info <- sm_bY_info[error_data, ]
 ```
 
-## Calculate user error
+## Calculate user error aka Repeatability
+Here, we calculate repeatability from formulas 1-3 in Fruciano 2016. The function below was written for Marcy et al 2018. It expects:
+* coords = a 3D array of shape coordinates
+* ind = a list of identifiers used to find replicates (in this case, CatNum)
+* nRep = number of repetitions taken for each individual (in this case, 2)
+
+The function also gives options for displaying results. The default is printing the ANOVA table to the console. If export is TRUE, then the user can give a filename for the resulting .csv saved to the working directory.
 ```{r}
-
+## Define repeatability function
+Rep_Ability <- function(coords, ind, nRep, print = TRUE, export = FALSE, filename = NULL) {
+        r.gdf <- geomorph.data.frame(coords = coords, ind = factor(ind))
+        rep.er <- procD.lm(coords ~ ind, data = r.gdf, iter = 999)
+        ## Among-individuals variance component:
+        S_sq_A <- ((rep.er$aov.table$MS[1] - rep.er$aov.table$MS[2]) / nRep) 
+        ## Within-individual variance component:
+        S_sq_W <- rep.er$aov.table$MS[2] 
+        ## Repeatability (sensu Geometric Morphometrics field)
+        R <- S_sq_A / (S_sq_W + S_sq_A) # analogue of the intraclass correlation coeffiecent
+        
+        table <- rep.er$aov.table
+        table$Repeatability <- R
+        
+        ## Display options
+        if (print) {
+                print(rep.er$aov.table)
+                cat("\n","Repeatability =", R)
+        }
+        if (export) {
+                write.csv(table, file = paste(filename, ".csv", sep = ""))
+        }
+}
 ```
 
+Calculate repeatability for both patch protocols
+```{r}
+Rep_Ability(big_err_shape, big_err_info$CatNum, nRep = 2)
+Rep_Ability(sm_err_shape, sm_err_info$CatNum, nRep = 2)
+```
 
 ### Save intermediate data
 ```{r}
