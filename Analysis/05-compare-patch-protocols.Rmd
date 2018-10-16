@@ -143,5 +143,11 @@ These ANOVAs are identical. Therefore, we decided to use only the small patch pr
 
 ### Save intermediate data
 ```{r}
-save(sm_shape, sm_info, sm_PCs, sp_col.gen, file = "../Data/Results/05-sm-data-for-analyses.rda")
+## Remove small modifier from shape and metadata matrix names for increased readability
+shape <- sm_shape
+info <- sm_info
+PCs <- sm_PCs
+col.gen <- sp_col.gen
+
+save(shape, info, PCs, col.gen, file = "../Data/Results/05-sm-data-for-analyses.rda")
 ```

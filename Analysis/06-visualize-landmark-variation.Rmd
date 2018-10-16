@@ -1,0 +1,75 @@
+---
+title: "06-visualize-landmark-variation"
+author: "Ariel Marcy"
+date: "10/16/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = '../aus-rodent-skulls')
+```
+
+### Load packages
+```{r message = FALSE}
+library(stringr)
+library(data.table)
+library(geomorph)
+```
+
+### Load data from previous steps
+```{r}
+load(file = "../Data/Results/05-sm-data-for-analyses.rda")
+```
+
+## Check for ouliers and fix landmarking errors
+_geomorph_ comes with a handy function to check for outliers. Since our sample has a wide range of species, we decided to include the groups factor. This means the plotOutliers returns likely outliers for each genus instead of the group as a whole. When groups were not defined, only large species were returned as "outliers". 
+```{r}
+## Plot outliers by genus
+outliers <- plotOutliers(shape, groups = info$Genus, inspect.outliers = T)
+```
+
+### Visualize why they are outliers by looking at landmark vectors
+We can examine the landmark placements in outliers as compared to the specimen closest to the median, based on the plots above. This allows us to determine if there were any major landmarking errors that might impact further analyses.
+
+Genus abbreviatons and number of outliers were inserted where needed for each genus. This code was only used once: after all landmarks were captured and before the other major analyses were completed.
+
+We begin by defining the function Spec_Shape, which takes the dimname from the shape array (what plotOutliers returns) and provides the correct 3D shape coordinates for this specimen. It expects:
+* spec, the dimname provided by plotOutliers
+* info, the metadata table which contains a column of CatNums
+* shape, the 3D shape array with landmark coordinates
+```{r}
+## Define function that will match a specimen name to its shape information
+Spec_Shape <- function(spec, info, shape){
+        categories <- unlist(strsplit(names(spec), "_"))
+        catnum <- categories[str_which(categories, "[A-Z][0-9]")]
+        spec_shape <- shape[, , which(info$CatNum == catnum)]
+        return(spec_shape)
+}
+
+## Get shape data for outliers indicated by plots above
+out1 <- Spec_Shape(outliers$Mel[1], info, shape) # 1st outlier in genus Mel
+out2 <- Spec_Shape(outliers$Mel[2], info, shape) # 2nd outlier in genus Mel
+
+## Compare outlier specimens to median specimen
+med_spec <- outliers$Mel[median(outliers$Mel)] # median specimen for genus Mel
+med_shape <- Spec_Shape(med_spec, info, shape)
+
+## Compare landmark locations in outlier specimen to median specimen
+plotRefToTarget(med_shape, out1, method = "vector", label = F)
+```
+**Repeat the above for each genus/group as needed. When landmarking errors are found, fix in Viewbox, export new coordinates, and begin again from script 01.** 
+
+## Landmark variation heatmaps
+Assuming that all landmarks are correctly placed now, we can use a variation of the plotRefToTarget() function by Dr Thomas Guillerme to see how landmarks vary within and between different taxa. 
+```{r}
+pr_PCA <- prcomp(two.d.array(shape))
+
+variation <- variation.range(shape, return.ID = TRUE, axis = 1, ordination = pr_PCA) # axis is for the first PC axis
+
+plotRefToTarget.heat(shape[,, variation$min.max[1]],
+                     shape[,, variation$min.max[2]],
+                     col = heat.colors, pt.size = 0.7, col.val = variation$range[,1],
+                     plotRefToTarget.args = list(mag = 1))
+```
+
