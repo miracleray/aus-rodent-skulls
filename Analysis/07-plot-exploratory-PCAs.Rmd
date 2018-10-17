@@ -1,0 +1,112 @@
+---
+title: "07-plot-exploratory-PCAs"
+author: "Ariel Marcy"
+date: "10/17/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = '../aus-rodent-skulls')
+```
+
+### Load packages
+```{r message = FALSE}
+library(stringr)
+library(data.table)
+library(geomorph)
+```
+
+### Load data from previous steps
+```{r}
+load(file = "../Data/Results/05-sm-data-for-analyses.rda")
+```
+
+## Exploratory analyses with PCAs
+PCAs provide a human-friendly way to visualize shape data. They are a good way to understand what's going on in the data quickly. However, because they artificially collapse the shape variation into orthogonal PC axes, they must be considered exploratory analyses only. 
+
+Here, we explore the variation in rodent skulls by coloring the PCA plots by genus, taxa, and by traits.
+
+Since we are going to add several columns to the metadata table, we'll remove columns no longer needed past the bilateral symmetry and replicate handling stages. 
+```{r}
+## Prep metadata for column additions
+info <- info[, c(-4,-6)] # removes unnecessary "Rep" and "All" columns
+info$Order <- c(1:dim(info)[1]) # preserves specimen order so metadata matches shape data
+```
+
+### Write function to make pretty PCA plots quickly
+This adapts code used in script 05. It expects:
+* shape, a 3D array of shape coordinates
+* col.grp, a vector of colors ordered in the same way as specimens in shape; usually made with Group_w_Color() function
+* PCx, the PC intended for the x-axis
+* PCy, the PC intended for the y-axis
+* pch.grp, an optional vector for point shapes, which defaults to a filled circle
+```{r}
+## Function to quickly plot PCA plots by color and reporting PC variation in %
+Plot_PCA <- function(shape, col.grp, PCx, PCy, pch.grp = 16) {
+        pca <- plotTangentSpace(shape, groups = col.grp, axis1 = PCx, axis2 = PCy, verbose = T)
+        
+        ## Write x and y labels with proportion of variance for PCx and PCy
+        PCs <- pca$pc.summary$importance
+        PCx_per <- round(PCs[2, PCx] * 100, digits = 1) # % with 1 decimal
+        PCx_lab <- paste("PC", PCx, " (", PCx_per, "%)", sep = "")
+        PCy_per <- round(PCs[2, PCy] * 100, digits = 1)
+        PCy_lab <- paste("PC", PCy, " (", PCy_per, "%)", sep = "")
+        
+        #if (is.null(pch.grp)) {pch.grp = 16}
+        
+        PCA_plot <- plot(pca$pc.scores[, PCx], pca$pc.scores[, PCy], asp = T, xlab = PCx_lab, ylab = PCy_lab, col = col.grp, pch = pch.grp, cex = 1.5, bg = col.grp, cex.axis = 1.3, cex.lab = 1.3)
+        }
+```
+
+## Plot PCA by genus for small patch dataset with no landmarking errors
+This plot will be similar to the small patch PCA plot from script 05 but using a dataset that's been checked for landmarking errors in script 06.
+```{r}
+## Plot PCA by genus and export as .eps into ../Data/Results folder
+setEPS()
+postscript("../Data/Results/PCA_genus.eps")
+Plot_PCA(shape, col.gen, 1, 2)
+dev.off()
+```
+
+## PCA plot by diet and guild
+This PCA plot colors specimen points by diet and gives them a point shape based on guild, i.e. where they spend most of their time foraging: aquatic, arboreal, or terrestrial.
+
+Trait information was gathered from the book, Native Mice and Rats by Bill Breed and Fred Ford (2006). 
+```{r}
+## Add trait data to the metadata table, info and preserve specimen order
+traits <- read.csv("../Data/Processed/in_ex_traits.csv", header = TRUE)
+traits$Taxa <- paste(str_sub(traits$Genus, 1, 1), str_sub(traits$Species, 1, 3), sep = "_") # make matching Taxa column
+info_traits <- merge(info, traits[3:8], by = "Taxa", sort = F) # adds only new columns from the trait data frame
+info_traits <- info_traits[order(info_traits$Order),] 
+```
+
+Assign colors and point shapes for PCA.
+```{r}
+## Point colors by feeding
+col.feed <- c("red", "darkorange", "gold", "green", "burlywood4")
+## Key: Carnivorous, Frugivorous, Granivorous, Herbivorus, Omnivorous
+col.feed <- Group_w_Color(info_traits, "Feeding", col.feed)
+
+## Point shapes by guild
+pch.gld <- c(19, 24, 22)
+## Key: Aquatic (circle), Arboreal (triangle), Terrestrial (square)
+pch.gld <- Group_w_Color(info_traits, "Guild", pch.gld)
+```
+
+Plot the PCA and add custom legends.
+```{r}
+Plot_PCA(shape, col.feed, 1, 2, pch.gld)
+
+## Legends
+legend(0.071, -0.012, legend = c("Aquatic", "Arboreal", "Terrest."), col = "black", border = NULL, pch = c(21, 24, 22))
+text(-0.0, -0.055, "Carnivore", col = "red")
+text(0.083, -0.005, "Frugivore", col = "darkorange")
+text(-0.015, 0.033, "Herbivore", col = "green")
+text(-0.07, -0.045, "Omnivore", col = "burlywood4")
+text(-0.085, 0.01, "Granivore", col = "gold2")
+```
+
+```{r}
+save(info_traits, col.feed, pch.gld, file = "../Data/Results/07-sm-data-w-traits.rda")
+```

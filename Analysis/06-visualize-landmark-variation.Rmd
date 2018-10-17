@@ -68,7 +68,7 @@ plotRefToTarget(med_shape, out1, method = "vector", label = F)
 ## Landmark variation heatmaps
 Assuming that all landmarks are correctly placed now, we can use a variation of the plotRefToTarget() function by Dr Thomas Guillerme to see how landmarks vary within and between different taxa. 
 
-Much of the below is adapted from the [vignette written by Dr Guillerme here](https://cdn.rawgit.com/TGuillerme/landvR/8a6a6bd5/inst/vignettes/Landmark_partition_test.html)
+Much of the below is adapted from the [vignette written by Dr Guillerme here](https://cdn.rawgit.com/TGuillerme/landvR/8a6a6bd5/inst/vignettes/Landmark_partition_test.html).
 ```{r}
 ## Find mean configuration
 consensus <- (select.procrustes(shape, selector = mean))[[1]]
@@ -93,7 +93,7 @@ class(gpagen_shape) <- "gpagen"
 PC1_var <- variation.range(gpagen_shape, return.ID = TRUE, axis = 1, ordination = ordination, type = "spherical")
 ```
 
-The next step is to make heatmap showing the size of variation and direction of movement for each landmark in the dataset, comparing between the min and max specimens along PC1.
+The next step is to make a heatmap showing the size of variation and direction of movement for each landmark in the dataset, comparing between the min and max specimens along PC1.
 ```{r}
 ## Warp specimens on the tangent space
 warp_PCA <- plotTangentSpace(shape, verbose = FALSE)
@@ -103,6 +103,14 @@ hypothetical_1 <- warp_PCA$pc.shapes[[1]]
 hypothetical_2 <- warp_PCA$pc.shapes[[2]]
 
 ## Plot the range of variation along PC1 using a heat color scheme
-procrustes.var.plot(hypothetical_1, hypothetical_2, col = heat.colors, 
-                    col.val = PC1_var$range[, "radius"], labels = F)
+PC1_var_plot <- procrustes.var.plot(hypothetical_1, hypothetical_2, col = heat.colors, col.val = PC1_var$range[, "radius"], labels = F)
+```
+
+### Save plot
+NOT WORKING - NEED TO SOLVE ISSUE OF 3D to 2D PLOT
+```{r}
+setEPS()
+postscript("../Data/Results/PC1_LM_var.eps")
+plot(PC1_var_plot, xlim = 400, ylim = 400, main = "Landmark variation along PC1")
+dev.off()
 ```
