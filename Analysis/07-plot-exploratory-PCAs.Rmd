@@ -61,6 +61,8 @@ Plot_PCA <- function(shape, col.grp, PCx, PCy, pch.grp = 16) {
 
 ## Plot PCA by genus for small patch dataset with no landmarking errors
 This plot will be similar to the small patch PCA plot from script 05 but using a dataset that's been checked for landmarking errors in script 06.
+
+The chunk below demonstrates how a plot can be exported as a .eps file. These file types can be opened in programs like Adobe Illustrator for minor aesthetic adjustments or be exported to a variety of other filetypes.
 ```{r}
 ## Plot PCA by genus and export as .eps into ../Data/Results folder
 setEPS()

@@ -1,0 +1,60 @@
+---
+title: "08-detect-allometric-changes"
+author: "Ariel Marcy"
+date: "10/17/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = '../aus-rodent-skulls')
+```
+
+### Load packages
+```{r message = FALSE}
+library(stringr)
+library(data.table)
+library(geomorph)
+```
+
+### Load data from previous steps
+```{r}
+load(file = "../Data/Results/05-sm-data-for-analyses.rda")
+load(file = "../Data/Results/07-sm-data-w-traits.rda")
+```
+
+## Correlation of allometry to PC1
+Centroid size is a proxy for body size. Usually in GMM studies, the centroid size is highly correlated with PC1, meaning that size increase is likely responsible for shape changes along this axis.
+
+Here we test for a significant correlation using Pearson's R and plot centroid size versus PC1.
+```{r}
+## Run PCA
+pca <- plotTangentSpace(shape, axis1 = 1, axis2 = 2, verbose = T)
+
+## Find Pearson's r for correlation with PC1
+cor <- cor.test(info$Csize, pca$pc.scores[,1], method = "pearson")
+cor.assoc <- round(unname(cor$estimate), digits = 2) # 2 sig figs
+
+## Set color scheme for legend, taxa listed in order presented in phylogeny
+gen_color <- c("yellow", "darkgoldenrod4", "green", "light green", "cornflowerblue", "light blue", "blue", "dark blue", "red", "orange", "magenta", "grey", "black")
+genus_name <- c("Mel", "Uro", "Mes", "Lep", "Leg", "Zyz", "Not", "Pse", "Hyd", "Xer", "Pog", "Mus", "Rat")
+
+## Plot centroid size versus PC1 to see correlation
+plot(info$Csize, pca$pc.scores[,1], xlim = c(120, 440), ylim = c(-0.13, 0.13), col = col.gen, pch = 16, xlab = "Centroid size", ylab = "PC1 score", main = "PC1 vs Centroid Size")
+legend(413, 0.15, legend = genus_name, col = gen_color, pch = 16, cex = 0.78)
+text(300, 0, paste("r =", cor.assoc), col = "dark grey")
+```
+
+## Find predicted allometric shape 
+In _geomorph_, the function `procD.allometry()` does a Procrustes ANOVA with permutation to find patterns of shape covariation with centroid size. 
+```{r}
+gdf <- geomorph.data.frame(coords = shape, csize = info$Csize, genus = info$Genus)
+
+## Run Procrustes ANOVA on shape and size with genus as the grouping variable
+Allo <- procD.allometry(coords ~ csize, ~ genus, logsz = TRUE, iter = 999, RRPP = TRUE, print.progress = FALSE, data = gdf)
+summary(Allo)
+
+## Plot results
+plot(log(Allo$size), (Allo$pred.val), xlim = c(4.72, 6.17), col = col.gen, pch = 16, xlab = "Log centroid size", ylab = "Predicted shape", main = "Predicted Allometric Shape by Genus")
+legend(6.04, 0.108, legend = genus_name, col = gen_color, pch = 16, cex = 0.78)
+```

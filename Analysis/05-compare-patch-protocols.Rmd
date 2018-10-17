@@ -75,7 +75,7 @@ sm_pca <- plotTangentSpace(sm_shape, groups = sp_col.gen, axis1 = 1, axis2 = 2, 
 
 ## Get proportion of variance for PC1 and PC2 in format for plots
 sm_PCs <- sm_pca$pc.summary$importance
-sPC1 <- round(sm_PCs[2,1] * 100, digits = 1)
+sPC1 <- round(sm_PCs[2,1] * 100, digits = 1) # percentage with 1 decimal
 sPC2 <- round(sm_PCs[2,2] * 100, digits = 1)
 
 ## Pretty plot
@@ -91,9 +91,11 @@ Here we create a 2-column table with Catalog Numbers and Centroid sizes, which a
 ## Remove specimen filenames from dimnames of centroid size vectors and combine CatNum with centroid data
 big_CatSize <- as.data.table(cbind(as.vector(big_sp_info$CatNum), unname(big_Y$Csize))) # data from GPA in step 02
 names(big_CatSize) <- c("CatNum", "Csize")
+big_CatSize$Csize <- as.numeric(big_CatSize$Csize) # coerce back to numeric
 
 sm_CatSize <- as.data.table(cbind(as.vector(sm_sp_info$CatNum), unname(sm_Y$Csize)))
 names(sm_CatSize) <- c("CatNum", "Csize")
+sm_CatSize$Csize <- as.numeric(sm_CatSize$Csize)
 
 ## Remove error replicates from centroid size table
 big_CatSize <- big_CatSize[which(big_sp_info$Rep == "non"),]
@@ -139,7 +141,7 @@ gdf <- geomorph.data.frame(size = sm_info$Csize)
 procD_s_size <- procD.lm(sm_shape ~ size, data = gdf)
 print(procD_s_size)
 ```
-These ANOVAs are identical. Therefore, we decided to use only the small patch protocol as this protocol captured more information (sutures versus patch points) and had less asymmetry than the big patch protocol. It also resembles the more popular method of landmarking. 
+These ANOVAs are also very similar. Therefore, we decided to use only the small patch protocol as this protocol captured more information (sutures versus patch points) and had less asymmetry than the big patch protocol. It also resembles the more popular method of landmarking. 
 
 ### Save intermediate data
 ```{r}
