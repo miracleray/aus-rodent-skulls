@@ -1,6 +1,7 @@
 ## Compiled ignore
 *.pdf
 *.html
+*.eps
 
 ## R ignore
 *.Rhistory
@@ -8,5 +9,3 @@
 *.rda
 *.RData
 *.Rapp.history
-
-Data/Processed/twoD_big_ss.csv
