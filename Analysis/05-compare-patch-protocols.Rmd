@@ -10,6 +10,13 @@ knitr::opts_chunk$set(echo = TRUE)
 knitr::opts_knit$set(root.dir = '../aus-rodent-skulls')
 ```
 
+# Compare big and small patch protocols
+Our study asked a methodological question: does it make a difference if we use big areas of patch semi-landmarks versus breaking it up with curve semilandmarks? Or in other words, will a big patch landmarks pick up different biological patterns than an area broken up by curve landmarks defined along sutures?
+
+We hypothesized that the big patch protocol would pick up convergent evolution while the small patch + suture curve protocol would better detect phylogentically-conserved shapes. 
+
+Here we test if the shape patterns produced by the two protocols are different in any way.
+
 ### Load packages
 ```{r message = FALSE}
 library(data.table)
@@ -25,102 +32,102 @@ load(file = "../Data/Results/04-data-for-analyses.rda")
 ```
 
 ## Plot PCAs for each protocol
-PCAs allow visual comparison of how differently the patch protocols sort the shape data. 
-
-First, we wrote a function to match colors to groups within the dataset. 'Group_w_Color()', creates a vector of colors matched to a group in the metadata. It expects:
-* metadata, a table of metadata for the shape data. In our workflow, it is usually created with the function 'Metadata()'
-* column, a character string which matches exactly the column name to be used as the group to be matched with colors
-* colorkey, a vector of colors listed in the same order as the unique group descriptors levels(as.factor(metadata$column))
-
-'Group_w_Color()' returns a vector of colors corresponding to the group descriptor of each individual in the metadata table, which can be used for plotting.
+PCAs allow visual comparison of how differently the patch protocols sort the shape data. To assist, we wrote a function to match colors or other plotting attributes to groups within the dataset. 
 ```{r}
-## Write function to match up colors to groups within the dataset
-Group_w_Color <- function(metadata, column, colorkey){
-        col_names <- unlist(dimnames(metadata)[[2]])
-        col_num <- which(col_names == column)
-        grp <- as.factor(metadata[, col_num])
-        names(colorkey) <- levels(grp)
-        grp_col <- colorkey[match(grp, names(colorkey))]
-        return(grp_col)
+PlotByGroup <- function(metadata, column, color.key){
+        # Matches colors or other plotting attributes to each specimen according to a grouping factor.
+        #
+        # Args:
+        #   metadata: metadata table, often created with WriteMetadata().
+        #   column: 1 string matching the column name with target groups.
+        #   color.key: a vector of attributes listed in the same order as the unique group descriptors given by levels(as.factor(metadata$column))
+        # 
+        # Returns:
+        #    A vector of colors the length of specimen number, with colors according to the group descriptor of each individual, ready for plot().
+        
+        col.names <- unlist(dimnames(metadata)[[2]])
+        col.num <- which(col.names == column)
+        grp <- as.factor(metadata[, col.num])
+        names(color.key) <- levels(grp)
+        grp.col <- color.key[match(grp, names(color.key))]
+        return(grp.col)
 }
 ```
 
 We'll use this function to look at the morphospace colored by genus.
 ```{r}
-## Assign colors by genus
+# Colors by genus: Hyd Leg Lep Mas Mel Mes Mus Not Pog Pse Rat Uro Xer Zyz
 col.gen <- c("red", "cornflowerblue", "light green", "dark blue", "yellow", "green", "grey", "blue", "magenta", "dark blue", "black", "darkgoldenrod4", "orange", "light blue")
-## Genus key: Hyd Leg Lep Mas Mel Mes Mus Not Pog Pse Rat Uro Xer Zyz
 
-sp_col.gen <- Group_w_Color(big_info, "Genus", col.gen) # is the same for big and small
+sp.col.gen <- PlotByGroup(big.info, "Genus", col.gen)  # is the same for big and small, tested with all.equal(?)
 ```
 
 ### PCA plot of big patch protocol
+PCAs are very human-friendly way of visualizing shape variation in 2 dimensions. Usually, the proportion of variance for each PC axis is reported in percent. 
 ```{r}
-## Plot PCAs
-big_pca <- plotTangentSpace(big_shape, groups = sp_col.gen, axis1 = 1, axis2 = 2, verbose = T)
+big.pca <- plotTangentSpace(big.shape, groups = sp.col.gen, axis1 = 1, axis2 = 2, verbose = T)
 
-## Get proportion of variance for PC1 and PC2 in format for plots
-big_PCs <- big_pca$pc.summary$importance
-bPC1 <- round(big_PCs[2,1] * 100, digits = 1)
-bPC2 <- round(big_PCs[2,2] * 100, digits = 1)
+# Get proportion of variance for PC1 and PC2 in format for plots
+big.PCs <- big.pca$pc.summary$importance
+big.PC1 <- round(big.PCs[2, 1] * 100, digits = 1)  # % with 1 decimal
+big.PC2 <- round(big.PCs[2, 2] * 100, digits = 1)
 
-## Pretty plot
-plot(big_pca$pc.scores[,1], big_pca$pc.scores[,2], asp = T, xlab = paste("PC1 (", bPC1, "%)", sep = ""), ylab = paste("PC2 (", bPC2, "%)", sep = ""), col = sp_col.gen, pch = 16, cex = 1.5, bg = sp_col.gen, cex.axis = 1.3, cex.lab = 1.3)
+# Pretty plot
+plot(x = big.pca$pc.scores[, 1], 
+     y = big.pca$pc.scores[, 2], 
+     xlab = paste("PC1 (", big.PC1, "%)", sep = ""), 
+     ylab = paste("PC2 (", big.PC2, "%)", sep = ""), 
+     asp = TRUE, 
+     col = sp.col.gen, 
+     bg = sp.col.gen,
+     pch = 16, 
+     cex = 1.5, 
+     cex.axis = 1.3, 
+     cex.lab = 1.3)
 ```
 
 ### PCA plot of small patch protocol
 ```{r}
-## Plot PCAs
-sm_pca <- plotTangentSpace(sm_shape, groups = sp_col.gen, axis1 = 1, axis2 = 2, verbose = T)
+# Plot PCAs
+sm.pca <- plotTangentSpace(sm.shape, groups = sp.col.gen, axis1 = 1, axis2 = 2, verbose = T)
 
-## Get proportion of variance for PC1 and PC2 in format for plots
-sm_PCs <- sm_pca$pc.summary$importance
-sPC1 <- round(sm_PCs[2,1] * 100, digits = 1) # percentage with 1 decimal
-sPC2 <- round(sm_PCs[2,2] * 100, digits = 1)
+# Get proportion of variance for PC1 and PC2 in format for plots
+sm.PCs <- sm.pca$pc.summary$importance
+sm.PC1 <- round(sm.PCs[2, 1] * 100, digits = 1)
+sm.PC2 <- round(sm.PCs[2, 2] * 100, digits = 1)
 
-## Pretty plot
-plot(sm_pca$pc.scores[,1], sm_pca$pc.scores[,2], asp = T, xlab = paste("PC1 (", sPC1, "%)", sep = ""), ylab = paste("PC2 (", sPC2, "%)", sep = ""), col = sp_col.gen, pch = 16, cex = 1.5, bg = sp_col.gen, cex.axis = 1.3, cex.lab = 1.3)
+# Pretty plot
+plot(x = sm.pca$pc.scores[, 1], 
+     y = sm.pca$pc.scores[, 2], 
+     xlab = paste("PC1 (", sm.PC1, "%)", sep = ""), 
+     ylab = paste("PC2 (", sm.PC2, "%)", sep = ""), 
+     asp = T,
+     col = sp.col.gen, 
+     bg = sp.col.gen,
+     pch = 16, 
+     cex = 1.5, 
+     cex.axis = 1.3, 
+     cex.lab = 1.3)
 ```
 
 ## Compare performance of patch protocols in ANOVA by genus and centroid size
-The patch protocols look extremely similar on the PCAs, which suggests that they do not capture shape variation differently from one another. To test this, we performed ANOVAs on each protocol looking at the shape and genus, as well as shape and centroid size (a proxy for body size), which is a test for allometry.
-
-### Combine symmetric shape data with centroid size from gpagen()
-Here we create a 2-column table with Catalog Numbers and Centroid sizes, which allows us to combine the Centroid size from the GPA with the metadata for the symmetric component of shape. 
-```{r}
-## Remove specimen filenames from dimnames of centroid size vectors and combine CatNum with centroid data
-big_CatSize <- as.data.table(cbind(as.vector(big_sp_info$CatNum), unname(big_Y$Csize))) # data from GPA in step 02
-names(big_CatSize) <- c("CatNum", "Csize")
-big_CatSize$Csize <- as.numeric(big_CatSize$Csize) # coerce back to numeric
-
-sm_CatSize <- as.data.table(cbind(as.vector(sm_sp_info$CatNum), unname(sm_Y$Csize)))
-names(sm_CatSize) <- c("CatNum", "Csize")
-sm_CatSize$Csize <- as.numeric(sm_CatSize$Csize)
-
-## Remove error replicates from centroid size table
-big_CatSize <- big_CatSize[which(big_sp_info$Rep == "non"),]
-sm_CatSize <- sm_CatSize[which(sm_sp_info$Rep == "non"),]
-
-## Merge Csize with bilateral metadata for each patch protocol
-big_info <- merge(big_info, big_CatSize, by = "CatNum", sort = F)
-sm_info <- merge(sm_info, sm_CatSize, by = "CatNum", sort = F)
-```
+The patch protocols look very similar on the PCAs, which suggests that they do not capture shape variation differently from one another. To test this, we performed two different Procrustes ANOVAs on each protocol's dataset:
+1) shape ~ genus 
+2) shape ~ centroid size (a proxy for body size), which is a test for allometry
 
 ### Run shape ~ genus ANOVAs on each protocol:  
 Big patch protocol:
 ```{r}
-## Procrustes ANOVA on shape and genus (big patch)
-gdf <- geomorph.data.frame(genus = big_info$Genus)
-procD_b_genus <- procD.lm(big_shape ~ genus, data = gdf)
-print(procD_b_genus)
+gdf <- geomorph.data.frame(genus = big.info$Genus, size = big.info$Csize)
+big.procD.genus <- procD.lm(big.shape ~ genus + size, data = gdf)
+print(big.procD.genus)
 ```
 
 Small patch protocol:
 ```{r}
-## Procrustes ANOVA on shape and genus (small patch)
-gdf <- geomorph.data.frame(genus = sm_info$Genus)
-procD_s_genus <- procD.lm(sm_shape ~ genus, data = gdf)
-print(procD_s_genus)
+gdf <- geomorph.data.frame(genus = sm.info$Genus)
+sm.procD.genus <- procD.lm(sm.shape ~ genus, data = gdf)
+print(sm.procD.genus)
 ```
 
 These ANOVAs are almost identical. 
@@ -128,28 +135,26 @@ These ANOVAs are almost identical.
 ### Run shape ~ Csize ANOVAs on each protocol:  
 Big patch protocol:
 ```{r}
-## Procrustes ANOVA on shape and Csize (big patch)
-gdf <- geomorph.data.frame(size = big_info$Csize)
-procD_b_size <- procD.lm(big_shape ~ size, data = gdf)
-print(procD_b_size)
+gdf <- geomorph.data.frame(size = big.info$Csize)
+big.procD.size <- procD.lm(big.shape ~ size, data = gdf)
+print(big.procD.size)
 ```
 
 Small patch protocol:
 ```{r}
-## Procrustes ANOVA on shape and Csize (small patch)
-gdf <- geomorph.data.frame(size = sm_info$Csize)
-procD_s_size <- procD.lm(sm_shape ~ size, data = gdf)
-print(procD_s_size)
+gdf <- geomorph.data.frame(size = sm.info$Csize)
+sm.procD.size <- procD.lm(sm.shape ~ size, data = gdf)
+print(sm.procD.size)
 ```
 These ANOVAs are also very similar. Therefore, we decided to use only the small patch protocol as this protocol captured more information (sutures versus patch points) and had less asymmetry than the big patch protocol. It also resembles the more popular method of landmarking. 
 
 ### Save intermediate data
 ```{r}
-## Remove small modifier from shape and metadata matrix names for increased readability
-shape <- sm_shape
-info <- sm_info
-PCs <- sm_PCs
-col.gen <- sp_col.gen
+# Remove "sm." from shape and metadata matrix names for increased readability
+shape <- sm.shape
+info <- sm.info
+PCs <- sm.PCs
+col.gen <- sp.col.gen
 
 save(shape, info, PCs, col.gen, file = "../Data/Results/05-sm-data-for-analyses.rda")
 ```

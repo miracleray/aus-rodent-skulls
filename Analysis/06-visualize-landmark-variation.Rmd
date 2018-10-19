@@ -10,13 +10,18 @@ knitr::opts_chunk$set(echo = TRUE)
 knitr::opts_knit$set(root.dir = '../aus-rodent-skulls')
 ```
 
+# Visualizing landmark variation
+Visualizing landmarks is important both to detect landmarking errors as well as to better understand which parts of the specimen vary the most. 
+
+We investigate both in this script. In fact, the new landvR package by Dr Thomas Guillerme used _geomorph_'s `plotRefToTarget()` function as its base to visualize landmark variation with a heatmap.
+
 ### Load packages
 ```{r message = FALSE}
 library(stringr)
 library(data.table)
 library(geomorph)
 
-## Load libraries (and install if necessary) for landvR package
+# Load libraries (and install if necessary) for landvR package
 if(!require(devtools)) install.packages("devtools")
 if(!require(dispRity)) install.packages("dispRity")
 if(!require(landvR)) install_github("TGuillerme/landvR")
@@ -30,7 +35,7 @@ load(file = "../Data/Results/05-sm-data-for-analyses.rda")
 ## Check for ouliers and fix landmarking errors
 _geomorph_ comes with a handy function to check for outliers. Since our sample has a wide range of species, we decided to include the groups factor. This means the plotOutliers returns likely outliers for each genus instead of the group as a whole. When groups were not defined, only large species were returned as "outliers". 
 ```{r}
-## Plot outliers by genus
+# Plot outliers by genus
 outliers <- plotOutliers(shape, groups = info$Genus, inspect.outliers = T)
 ```
 
@@ -39,78 +44,89 @@ We can examine the landmark placements in outliers as compared to the specimen c
 
 Genus abbreviatons and number of outliers were inserted where needed for each genus. This code was only used once: after all landmarks were captured and before the other major analyses were completed.
 
-We begin by defining the function Spec_Shape, which takes the dimname from the shape array (what plotOutliers returns) and provides the correct 3D shape coordinates for this specimen. It expects:
-* spec, the dimname provided by plotOutliers
-* info, the metadata table which contains a column of CatNums
-* shape, the 3D shape array with landmark coordinates
+First, we write a function to help us visualize outlier shape information.
 ```{r}
-## Define function that will match a specimen name to its shape information
-Spec_Shape <- function(spec, info, shape){
+MatchSpecShape <- function(spec, info, shape){
+        # Matches a specimen name to its 3D shape information.
+        #
+        # Args:
+        #    spec: the specimen dimname provided by plotOutliers(), usually the filename of the specimen provided while landmarking.
+        #    info: the metadata table which contains a column named CatNum.
+        #    shape: 3D shape array in (p x k x n), where n = specimen number.
+        #
+        # Returns:
+        #    The shape data for 1 specimen of name "spec" in format landmarks x coordinates (p x k).
+        
         categories <- unlist(strsplit(names(spec), "_"))
-        catnum <- categories[str_which(categories, "[A-Z][0-9]")]
+        catnum <- categories[str_which(categories, "[A-Z][0-9]")]  # detects CatNum
         spec_shape <- shape[, , which(info$CatNum == catnum)]
         return(spec_shape)
 }
+```
 
-## Get shape data for outliers indicated by plots above
-out1 <- Spec_Shape(outliers$Mel[1], info, shape) # 1st outlier in genus Mel
-out2 <- Spec_Shape(outliers$Mel[2], info, shape) # 2nd outlier in genus Mel
+We can now use it to compare the outliers to the median specimen in its genus.
+```{r}
+# Get shape data for outliers indicated by plots above
+out.1 <- MatchSpecShape(outliers$Mel[1], info, shape)  # 1st outlier in genus Mel
+out.2 <- MatchSpecShape(outliers$Mel[2], info, shape)  # 2nd outlier in genus Mel
 
-## Compare outlier specimens to median specimen
-med_spec <- outliers$Mel[median(outliers$Mel)] # median specimen for genus Mel
-med_shape <- Spec_Shape(med_spec, info, shape)
+# Compare outlier specimens to median specimen
+med.spec <- outliers$Mel[median(outliers$Mel)]  # median specimen in Mel
+med.shape <- MatchSpecShape(med.spec, info, shape)
 
-## Compare landmark locations in outlier specimen to median specimen
-plotRefToTarget(med_shape, out1, method = "vector", label = F)
+# Compare landmark locations in outlier specimens to median specimen
+plotRefToTarget(med.shape, out.1, method = "vector", label = FALSE)
+plotRefToTarget(med.shape, out.2, method = "vector", label = FALSE)
 ```
 **Repeat the above for each genus/group as needed. When landmarking errors are found, fix in Viewbox, export new coordinates, and begin again from script 01.** 
 
 ## Landmark variation heatmaps
-Assuming that all landmarks are correctly placed now, we can use a variation of the plotRefToTarget() function by Dr Thomas Guillerme to see how landmarks vary within and between different taxa. 
+Assuming that all landmarks are correctly placed now, we can use a variation of the `procrustes.var.plot()` function by Dr Thomas Guillerme to see how landmarks vary within and between different taxa. 
 
 Much of the below is adapted from the [vignette written by Dr Guillerme here](https://cdn.rawgit.com/TGuillerme/landvR/8a6a6bd5/inst/vignettes/Landmark_partition_test.html).
 ```{r}
-## Find mean configuration
+# Find mean configuration
 consensus <- (select.procrustes(shape, selector = mean))[[1]]
 
-## Measure spherical coordinates differences from the mean
+# Measure spherical coordinates differences from the mean
 diff_from_mean <- coordinates.difference(coordinates = shape, reference = consensus, type = "spherical")
 ```
 
 To test the hypothesis that each landmark's variation from the mean configuration is above expected, we can use the PC axes from a PCA.
 ```{r}
-## Ordinate the data
-twoD_shape <- two.d.array(shape)
+# Ordinate the data
+twoD.shape <- two.d.array(shape)
 ordination <- stats::prcomp(twoD_shape)
 
-## Force the symmetric component of shape into class "gpagen" (required for variation.range)
-gpagen_shape <- list()
-gpagen_shape$coords <- shape
-gpagen_shape$consensus <- consensus
-class(gpagen_shape) <- "gpagen"
+# Force the symmetric component of shape into class "gpagen" (required for variation.range)
+gpagen.shape <- list()
+gpagen.shape$coords <- shape
+gpagen.shape$consensus <- consensus
+class(gpagen.shape) <- "gpagen"
 
-## Measure extremes of variation from mean on PC1
-PC1_var <- variation.range(gpagen_shape, return.ID = TRUE, axis = 1, ordination = ordination, type = "spherical")
+# Measure extremes of variation from mean on PC1
+PC1.var <- variation.range(gpagen.shape, return.ID = TRUE, axis = 1, ordination = ordination, type = "spherical")
 ```
 
 The next step is to make a heatmap showing the size of variation and direction of movement for each landmark in the dataset, comparing between the min and max specimens along PC1.
 ```{r}
-## Warp specimens on the tangent space
-warp_PCA <- plotTangentSpace(shape, verbose = FALSE)
+# Wrap specimens on the tangent space
+wrap_PCA <- plotTangentSpace(shape, verbose = FALSE)
 
-## Select extreme specimens (the ones that make the warp-meshes)
-hypothetical_1 <- warp_PCA$pc.shapes[[1]]
-hypothetical_2 <- warp_PCA$pc.shapes[[2]]
+# Select extreme specimens (the ones that make the warp-meshes)
+hypothetical.1 <- wrap.PCA$pc.shapes[[1]]
+hypothetical.2 <- wrap.PCA$pc.shapes[[2]]
 
-## Plot the range of variation along PC1 using a heat color scheme
-PC1_var_plot <- procrustes.var.plot(hypothetical_1, hypothetical_2, col = heat.colors, col.val = PC1_var$range[, "radius"], labels = F)
+# Plot the range of variation along PC1 using a heat color scheme
+PC1.var.plot <- procrustes.var.plot(hypothetical.1, hypothetical.2, col = heat.colors, col.val = PC1_var$range[, "radius"], labels = F)
 ```
 
 ### Save plot
-NOT WORKING - NEED TO SOLVE ISSUE OF 3D to 2D PLOT
+WIP.
 ```{r}
+## TODO: NEED TO SOLVE ISSUE OF 3D to 2D PLOT
 setEPS()
 postscript("../Data/Results/PC1_LM_var.eps")
-plot(PC1_var_plot, xlim = 400, ylim = 400, main = "Landmark variation along PC1")
+plot(PC1.var.plot, xlim = 400, ylim = 400, main = "Landmark variation along PC1")
 dev.off()
 ```

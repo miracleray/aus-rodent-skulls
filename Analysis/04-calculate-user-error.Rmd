@@ -38,7 +38,7 @@ main <- which(big.bY.info$Rep == "non")
 big.shape <- big.bY.ss[, , main]
 big.info <- big.bY.info[main, ]
 
-sm.shape <- sm.bY.ss[, , main]  # main for small patch protocol is same as for the big patch protocol, tested with all.equal()
+sm.shape <- sm.bY.ss[, , main]  # main is the same for big and small patch protocols, tested with all.equal()
 sm.info <- sm.bY.info[main, ]
 ```
 
@@ -46,7 +46,7 @@ Second, create an error measurement dataset for both protocols that includes rep
 ```{r}
 # Find index for both versions of specimens with replicates using rep.spec list make in script 01.
 rep.CatNums <- as.character(str_sub(rep.spec, 9, -1))  # isolate CatNum
-error.data <- which(sm.bY.info$CatNum %in% rep.CatNums)  # same for small and big patch protocols, tested with all.equal()
+error.data <- which(sm.bY.info$CatNum %in% rep.CatNums)  # error.data is the same for small and big patch protocols, tested with all.equal()
 
 # Subset shape and metadata tables for each protcol
 big.err.shape <- big.bY.ss[, , error.data]
@@ -57,15 +57,15 @@ sm.err.info <- sm.bY.info[error.data, ]
 ```
 
 ## Calculate user error aka Repeatability
-Here, we calculate repeatability from formulas 1-3 in Fruciano 2016. The function below was written for Marcy et al 2018. 
+Here, we calculate repeatability from formulas 1-3 in Fruciano 2016. The function below was modified from Marcy et al 2018. 
 ```{r}
-RepAbility <- function(coords, ids, nRep, print = TRUE, export = FALSE, filename = NULL) {
+RepAbility <- function(coords, ids, n.Rep, print = TRUE, export = FALSE, filename = NULL) {
         # Calculates repeatability (R) for GMM studies.
         #
         # Args:
         #    coords: a 3D array (p x k X n) of shape coordinates.
-        #    IDs: a list of identifiers used to find replicates, e.g. CatNum.
-        #    nRep: number of repetitions taken for each individual
+        #    ids: a list of identifiers used to find replicates, e.g. CatNum.
+        #    n.Rep: number of repetitions taken for each individual
         #    print: if TRUE, prints ANOVA and R to the console.
         #    export: if TRUE, exports ANOVA and R to .csv.
         #    filename: the filename used to save the .csv file.
@@ -76,7 +76,7 @@ RepAbility <- function(coords, ids, nRep, print = TRUE, export = FALSE, filename
         # Calculations from formulas 1-3 in Fruciano 2016
         r.gdf <- geomorph.data.frame(coords = coords, ind = factor(ids))
         rep.er <- procD.lm(coords ~ ind, data = r.gdf, iter = 999)
-        S.sq.A <- ((rep.er$aov.table$MS[1] - rep.er$aov.table$MS[2]) / nRep)  # among-individuals variance component: 
+        S.sq.A <- ((rep.er$aov.table$MS[1] - rep.er$aov.table$MS[2]) / n.Rep)  # among-individuals variance component: 
         S.sq.W <- rep.er$aov.table$MS[2]  # within-individual variance
         R <- S.sq.A / (S.sq.W + S.sq.A)  # analogue of the intraclass correlation coeffiecent
         
@@ -97,8 +97,8 @@ RepAbility <- function(coords, ids, nRep, print = TRUE, export = FALSE, filename
 
 Calculate repeatability for both patch protocols
 ```{r}
-RepAbility(big.err.shape, big.err.info$CatNum, nRep = 2)
-RepAbility(sm.err.shape, sm.err.info$CatNum, nRep = 2)
+RepAbility(big.err.shape, big.err.info$CatNum, n.Rep = 2)
+RepAbility(sm.err.shape, sm.err.info$CatNum, n.Rep = 2)
 ```
 
 ### Save intermediate data
