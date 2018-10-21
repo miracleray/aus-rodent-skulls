@@ -59,7 +59,6 @@ We correct the naming scheme to be machine-readable and in the process create a 
 # Detect replicates
 names <- dimnames(A)[[3]]
 is.rep <- which(str_detect(names, "_ERR"))
-rep.names <- names[is.rep]
 
 # Remove unpredictable or extra characters in specimen names
 names <- gsub("_ERR", "", names)

@@ -95,7 +95,7 @@ RepAbility <- function(coords, ids, n.Rep, print = TRUE, export = FALSE, filenam
 }
 ```
 
-Calculate repeatability for both patch protocols
+# Calculate repeatability for both patch protocols
 ```{r}
 RepAbility(big.err.shape, big.err.info$CatNum, n.Rep = 2)
 RepAbility(sm.err.shape, sm.err.info$CatNum, n.Rep = 2)

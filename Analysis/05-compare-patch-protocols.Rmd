@@ -115,38 +115,43 @@ The patch protocols look very similar on the PCAs, which suggests that they do n
 1) shape ~ genus 
 2) shape ~ centroid size (a proxy for body size), which is a test for allometry
 
-### Run shape ~ genus ANOVAs on each protocol:  
+### Add centroid size from gpagen() to symmetric shape metadata
+Since the bilat.symmetry() function changed the order of specimens, we need to add the centroid size information from gpagen() to the new metadata table we just made for the symmetric component of shape.
+```{r}
+# Remove specimen filenames from dimnames of centroid size vectors and combine CatNum with centroid data
+big.CatSize <- as.data.table(cbind(as.vector(big.sp.info$CatNum), unname(big.Y$Csize)))  # data from GPA in script 02
+names(big.CatSize) <- c("CatNum", "Csize")
+big.CatSize$Csize <- as.numeric(big.CatSize$Csize)  # coerce back to numeric
+
+sm.CatSize <- as.data.table(cbind(as.vector(sm.sp.info$CatNum), unname(sm.Y$Csize)))
+names(sm.CatSize) <- c("CatNum", "Csize")
+sm.CatSize$Csize <- as.numeric(sm.CatSize$Csize)
+
+# Remove error replicates from centroid size table
+big.CatSize <- big.CatSize[which(big.sp.info$Rep == "non"), ]
+sm.CatSize <- sm.CatSize[which(sm.sp.info$Rep == "non"), ]
+
+# Merge Csize with bilateral metadata for each patch protocol
+big.info <- merge(big.info, big.CatSize, by = "CatNum", sort = F)
+sm.info <- merge(sm.info, sm.CatSize, by = "CatNum", sort = F)
+```
+
+### Run shape ~ genus * Csize ANOVAs on each protocol:  
 Big patch protocol:
 ```{r}
 gdf <- geomorph.data.frame(genus = big.info$Genus, size = big.info$Csize)
-big.procD.genus <- procD.lm(big.shape ~ genus + size, data = gdf)
+big.procD <- procD.lm(big.shape ~ genus * size, data = gdf)
 print(big.procD.genus)
 ```
 
 Small patch protocol:
 ```{r}
-gdf <- geomorph.data.frame(genus = sm.info$Genus)
-sm.procD.genus <- procD.lm(sm.shape ~ genus, data = gdf)
-print(sm.procD.genus)
+gdf <- geomorph.data.frame(genus = sm.info$Genus, size = sm.info$Csize)
+sm.procD <- procD.lm(sm.shape ~ genus * size, data = gdf)
+print(sm.procD)
 ```
 
-These ANOVAs are almost identical. 
-
-### Run shape ~ Csize ANOVAs on each protocol:  
-Big patch protocol:
-```{r}
-gdf <- geomorph.data.frame(size = big.info$Csize)
-big.procD.size <- procD.lm(big.shape ~ size, data = gdf)
-print(big.procD.size)
-```
-
-Small patch protocol:
-```{r}
-gdf <- geomorph.data.frame(size = sm.info$Csize)
-sm.procD.size <- procD.lm(sm.shape ~ size, data = gdf)
-print(sm.procD.size)
-```
-These ANOVAs are also very similar. Therefore, we decided to use only the small patch protocol as this protocol captured more information (sutures versus patch points) and had less asymmetry than the big patch protocol. It also resembles the more popular method of landmarking. 
+These ANOVAs are also very similar. Therefore, we decided to use only the small patch protocol as this protocol captured more information (sutures versus patch points) and had less asymmetry than the big patch protocol. It also resembles the more common method of landmarking.
 
 ### Save intermediate data
 ```{r}
