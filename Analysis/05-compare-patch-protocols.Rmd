@@ -141,7 +141,7 @@ Big patch protocol:
 ```{r}
 gdf <- geomorph.data.frame(genus = big.info$Genus, size = big.info$Csize)
 big.procD <- procD.lm(big.shape ~ genus * size, data = gdf)
-print(big.procD.genus)
+print(big.procD)
 ```
 
 Small patch protocol:

@@ -58,9 +58,8 @@ text(300, 0, paste("r =", cor.assoc), col = "dark grey")
 ## Find predicted allometric shape 
 In _geomorph_, the function `procD.allometry()` does a Procrustes ANOVA with permutation to find patterns of shape covariation with centroid size. 
 ```{r}
-gdf <- geomorph.data.frame(coords = shape, csize = info$Csize, genus = info$Genus)
-
 # Run Procrustes ANOVA on shape and size with genus as the grouping variable
+gdf <- geomorph.data.frame(coords = shape, csize = info$Csize, genus = info$Genus)
 Allo <- procD.allometry(coords ~ csize, ~ genus, logsz = TRUE, iter = 999, RRPP = TRUE, print.progress = FALSE, data = gdf)
 summary(Allo)
 
