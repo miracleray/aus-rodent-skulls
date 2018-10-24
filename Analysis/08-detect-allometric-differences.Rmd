@@ -38,7 +38,7 @@ cor <- cor.test(info$Csize, pca$pc.scores[,1], method = "pearson")
 cor.assoc <- round(unname(cor$estimate), digits = 2)  # round to 2 sig figs
 
 # Set color scheme for legend, taxa listed in order presented in phylogeny
-gen.color <- c("yellow", "darkgoldenrod4", "green", "light green", "cornflowerblue", "light blue", "blue", "dark blue", "red", "orange", "magenta", "grey", "black")
+gen.color <- c("yellow", "darkgoldenrod4", "green", "light green", "cornflowerblue", "light blue", "blue", "dark blue", "red", "orange", "magenta", "grey", "black")  # same as col.gen but in a different order
 genus.name <- c("Mel", "Uro", "Mes", "Lep", "Leg", "Zyz", "Not", "Pse", "Hyd", "Xer", "Pog", "Mus", "Rat")
 
 # Plot centroid size versus PC1 to see correlation
@@ -55,7 +55,7 @@ legend(413, 0.15, legend = genus.name, col = gen.color, pch = 16, cex = 0.78)
 text(300, 0, paste("r =", cor.assoc), col = "dark grey")
 ```
 
-## Find predicted allometric shape 
+## Find predicted allometric shape by genus
 In _geomorph_, the function `procD.allometry()` does a Procrustes ANOVA with permutation to find patterns of shape covariation with centroid size. 
 ```{r}
 # Run Procrustes ANOVA on shape and size with genus as the grouping variable
@@ -73,4 +73,66 @@ plot(x = log(Allo$size),
      xlab = "Log centroid size", 
      ylab = "Predicted shape")
 legend(6.04, 0.108, legend = genus.name, col = gen.color, pch = 16, cex = 0.78)
+```
+
+### Write function to identify invasive specimens
+The output of this function will allow us to subset both the info and shape datasets to include only native species. 
+```{r}
+FindNatives <- function(spec.info, column, invasives) {
+        # Creates a logical vector where TRUE indicates a native species and FALSE indicates an invasive species.
+        #
+        # Args:
+        #    spec.info: table of specimen information that includes a column where the list invasives will distinguish the invasive species.
+        #    column: the column name in spec.info to be used to ID invasives.
+        #    invasives: a list of identifiers (such as species or genus names) for invasive species found in the column above.
+        #
+        # Returns:
+        #    A logical vector in same order as spec.info table where TRUE indicates a native and FALSE indicates an invasive.
+
+        n.spec <- dim(spec.info)[1]
+        is.invasive <- vector(mode = "logical", length = n.spec)
+        test.col <- which(colnames(spec.info) == column)
+        
+        for (i in 1:n.spec) {  # for each specimen...
+                for (k in 1:length(invasives)) {  # ... test each invasive name
+                        if (spec.info[i, test.col] == invasives[k]) {
+                                is.invasive[i] <- TRUE
+                        }
+                }
+        }
+        is.native <- !is.invasive
+        return(is.native)
+}
+```
+
+## Find predicted allometric shape by clade 
+The Procrustes ANOVA found no significant differences between slopes of different genera. Here we test if this pattern holds for larger clades of Australian rodents. 
+```{r}
+# Remove invasives from the dataset
+is.native <- FindNatives(info.traits, column = "Clade", invasives = c("invRattus", "Mus"))
+native.shape <- shape[, , is.native]
+native.info <- info.traits[is.native, ]
+
+# Set up colors in order of clades as they fall on evolutionary tree
+clade.names <- c("Uromyini", "Conilurini", "Pseudomini", "Hydromini", "Pogonomini", "Rattus") 
+col.clade.legend <- c("yellow", "green", "dark blue", "red", "magenta", "black")  # similar to col.gen
+col.clade.key <- c("green", "red", "magenta", "dark blue", "black", "yellow")
+
+col.clade <- PlotByGroup(native.info, "Clade", col.clade.key)
+
+# Run Procrustes ANOVA on shape and size with clade as the grouping variable
+gdf <- geomorph.data.frame(coords = native.shape, csize = native.info$Csize, clade = native.info$Clade)
+Allo <- procD.allometry(coords ~ csize, ~ clade, logsz = TRUE, iter = 999, RRPP = TRUE, print.progress = FALSE, data = gdf)
+summary(Allo)
+
+# Plot results
+plot(x = log(Allo$size),
+     y = Allo$pred.val, 
+     xlim = c(4.72, 6.17), 
+     col = col.clade, 
+     pch = 16, 
+     main = "Predicted Allometric Shape by Clade",
+     xlab = "Log centroid size", 
+     ylab = "Predicted shape")
+legend(6.04, 0.108, legend = clade.names, col = col.clade.legend, pch = 16, cex = 0.78)
 ```
