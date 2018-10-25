@@ -74,7 +74,7 @@ big.biY <- bilat.symmetry(big.Y$coords, ind = big.sp.info$All, object.sym = T, r
 big.bY.ss <- big.biY$symm.shape  # analogous to Y$coords, where Y is the output of gpagen()
 
 # Create new table of specimen information since the bilat function rearranges the coordinate array
-cols2 = c("Genus", "Species", "CatNum", "Rep")  # column names minus Patch
+cols2 <- c("Genus", "Species", "CatNum", "Rep")  # column names minus Patch
 big.bY.info <- WriteMetadata(big.bY.ss, cols2)
 
 # Repeat steps above for small patch protocol

@@ -48,7 +48,7 @@ PlotByGroup <- function(metadata, column, color.key){
         col.names <- unlist(dimnames(metadata)[[2]])
         col.num <- which(col.names == column)
         grp <- as.factor(metadata[, col.num])
-        names(color.key) <- levels(grp)
+        names(color.key) <- sort(unique(grp))
         grp.col <- color.key[match(grp, names(color.key))]
         return(grp.col)
 }

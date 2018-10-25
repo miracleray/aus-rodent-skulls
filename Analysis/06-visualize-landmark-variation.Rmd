@@ -59,8 +59,8 @@ MatchSpecShape <- function(spec, info, shape){
         
         categories <- unlist(strsplit(names(spec), "_"))
         catnum <- categories[str_which(categories, "[A-Z][0-9]")]  # detects CatNum
-        spec_shape <- shape[, , which(info$CatNum == catnum)]
-        return(spec_shape)
+        spec.shape <- shape[, , which(info$CatNum == catnum)]
+        return(spec.shape)
 }
 ```
 
@@ -89,14 +89,14 @@ Much of the below is adapted from the [vignette written by Dr Guillerme here](ht
 consensus <- (select.procrustes(shape, selector = mean))[[1]]
 
 # Measure spherical coordinates differences from the mean
-diff_from_mean <- coordinates.difference(coordinates = shape, reference = consensus, type = "spherical")
+diff.from.mean <- coordinates.difference(coordinates = shape, reference = consensus, type = "spherical")
 ```
 
 To test the hypothesis that each landmark's variation from the mean configuration is above expected, we can use the PC axes from a PCA.
 ```{r}
 # Ordinate the data
 twoD.shape <- two.d.array(shape)
-ordination <- stats::prcomp(twoD_shape)
+ordination <- stats::prcomp(twoD.shape)
 
 # Force the symmetric component of shape into class "gpagen" (required for variation.range)
 gpagen.shape <- list()
@@ -105,20 +105,20 @@ gpagen.shape$consensus <- consensus
 class(gpagen.shape) <- "gpagen"
 
 # Measure extremes of variation from mean on PC1
-PC1.var <- variation.range(gpagen.shape, return.ID = TRUE, axis = 1, ordination = ordination, type = "spherical")
+PC1.var <- variation.range(gpagen.shape, return.ID = FALSE, axis = 1, ordination = ordination, type = "spherical")
 ```
 
 The next step is to make a heatmap showing the size of variation and direction of movement for each landmark in the dataset, comparing between the min and max specimens along PC1.
 ```{r}
 # Wrap specimens on the tangent space
-wrap_PCA <- plotTangentSpace(shape, verbose = FALSE)
+wrap.PCA <- plotTangentSpace(shape, verbose = FALSE)
 
 # Select extreme specimens (the ones that make the warp-meshes)
 hypothetical.1 <- wrap.PCA$pc.shapes[[1]]
 hypothetical.2 <- wrap.PCA$pc.shapes[[2]]
 
 # Plot the range of variation along PC1 using a heat color scheme
-PC1.var.plot <- procrustes.var.plot(hypothetical.1, hypothetical.2, col = heat.colors, col.val = PC1_var$range[, "radius"], labels = F)
+PC1.var.plot <- procrustes.var.plot(hypothetical.1, hypothetical.2, col = heat.colors, col.val = PC1.var[, "radius"], labels = F)
 ```
 
 ### Save plot

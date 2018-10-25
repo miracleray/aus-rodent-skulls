@@ -145,7 +145,7 @@ sm.pt.names <- u.pt.names[sm.pts]  # creates table of unique point names
 ```
 
 ## Save intermediate data
-Now that we have extracted the 2 patch protocol datasets and the specimen metadata, we are ready for the next analysis step: 02-run-GPA-with-sliding.Rmd. 
+Now that we have extracted the 2 patch protocol datasets and the specimen metadata, we are ready for the next analysis step: 02-run-GPA-with-sliding.Rmd.
 
 Here we save the R objects we will need for later steps so this script does not have to be run again.
 ```{r}
