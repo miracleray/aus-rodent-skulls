@@ -95,11 +95,28 @@ RepAbility <- function(coords, ids, n.Rep, print = TRUE, export = FALSE, filenam
 }
 ```
 
-# Calculate repeatability for both patch protocols
+### Calculate repeatability for both patch protocols
 ```{r}
 RepAbility(big.err.shape, big.err.info$CatNum, n.Rep = 2)
 RepAbility(sm.err.shape, sm.err.info$CatNum, n.Rep = 2)
 ```
+
+## Calculate repeatability without patch points
+Patch points could be artificially inflating our repeatability numbers. To test this, we calculated repeatability for the small and big patch datasets with patch points removed. 
+
+Note that removing patch points will remove 16 more points from the big patch protocol than the small patch protocol. 
+```{r}
+# Subset the shape datasets for only fixed LMs and curve semi-LMs
+big.patchless.shape <- big.err.shape[-big.pat.num, , ] 
+sm.patchless.shape <- sm.err.shape[-sm.pat.num, , ]
+
+# Run repeatability again
+RepAbility(big.patchless.shape, big.err.info$CatNum, n.Rep = 2)
+RepAbility(sm.patchless.shape, sm.err.info$CatNum, n.Rep = 2)
+```
+Taking out patch points does decrease the repeatability by about 1% for each protocol:
+Big Patch is 92.6% with patches, 91.6% without patches (140 points removed)
+Small Patch: 92.5% with patches, 91.7% without patches (124 points removed) 
 
 ### Save intermediate data
 ```{r}
