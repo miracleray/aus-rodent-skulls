@@ -94,3 +94,17 @@ un.hypothetical.2 <- unslid.wrap.PCA$pc.shapes[[2]]
 # Plot the range of variation along PC1 using a heat color scheme
 PC1.var.plot <- procrustes.var.plot(un.hypothetical.1, un.hypothetical.2, col = heat.colors, col.val = unslid.PC1.var[, "radius"], labels = F)
 ```
+
+### Histogram of radius variation for unslid dataset
+```{r}
+# Plot the histogram of variation in landmarks for this protocol
+var.range.unslid <- variation.range(unslid.gpagen.shape)
+hist(var.range.unslid[, 1])
+```
+
+### Compare to slid 
+```{r}
+# Plot the histogram of variation in landmarks for this protocol
+var.range <- variation.range(gpagen.shape)
+hist(var.range[, 1])
+```

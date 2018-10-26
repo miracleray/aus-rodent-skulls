@@ -65,15 +65,58 @@ summary(Allo)
 
 # Plot results
 plot(x = log(Allo$size),
-     y = Allo$pred.val, 
+     y = Allo$CAC, 
      xlim = c(4.72, 6.17), 
      col = col.gen, 
      pch = 16, 
      main = "Predicted Allometric Shape by Genus",
      xlab = "Log centroid size", 
      ylab = "Predicted shape")
-legend(6.04, 0.108, legend = genus.name, col = gen.color, pch = 16, cex = 0.78)
+legend(6.04, 0.067, legend = genus.name, col = gen.color, pch = 16, cex = 0.78)
 ```
+
+### Visualize allometry using the Common Allometric Component (CAC) of shape
+This plot gives an esitmate of the average allometric trend within genera. 
+```{r}
+plot(x = log(Allo$size),
+     y = Allo$CAC, 
+     xlim = c(4.72, 6.17), 
+     col = col.gen, 
+     pch = 16, 
+     main = "Common Allometric Component of Shape by Genus",
+     xlab = "Log centroid size", 
+     ylab = "CAC")
+legend(6.04, 0.067, legend = genus.name, col = gen.color, pch = 16, cex = 0.78)
+```
+### Visualize allometry using the regression of shape on size (RegScore)
+This method calculates shape scores from the regression of shape on size, and plots these versus size. Different than CAC when multiple groups are considered.
+
+```{r}
+plot(x = log(Allo$size),
+     y = Allo$Reg.proj, 
+     xlim = c(4.72, 6.17), 
+     col = col.gen, 
+     pch = 16, 
+     main = "Regression of shape on size by Genus",
+     xlab = "Log centroid size", 
+     ylab = "RegScore")
+legend(6.04, 0.101, legend = genus.name, col = gen.color, pch = 16, cex = 0.78)
+```
+
+## Visualize the residual of component of shape (size-less shape) as a PCA
+```{r}
+plot(x = Allo$RSC[, 1],
+     y = Allo$RSC[, 2], 
+     xlim = c(-0.10, 0.095), # parameters used for PCAs in previous script
+     ylim = c(-0.04, 0.07), 
+     col = col.gen, 
+     pch = 16, 
+     main = "Residual shape component (size-less shape)",
+     xlab = "RSC PC1", 
+     ylab = "RSC PC2")
+legend(0.078, 0.078, legend = genus.name, col = gen.color, pch = 16, cex = 0.78)
+```
+Looks like a mess, but interesting that genus _Rattus_ appears to have greater variation than any other genus. 
 
 ### Write function to identify invasive specimens
 The output of this function will allow us to subset both the info and shape datasets to include only native species. 
@@ -122,17 +165,45 @@ col.clade <- PlotByGroup(native.info, "Clade", col.clade.key)
 
 # Run Procrustes ANOVA on shape and size with clade as the grouping variable
 gdf <- geomorph.data.frame(coords = native.shape, csize = native.info$Csize, clade = native.info$Clade)
-Allo <- procD.allometry(coords ~ csize, ~ clade, logsz = TRUE, iter = 999, RRPP = TRUE, print.progress = FALSE, data = gdf)
+Allo.clade <- procD.allometry(coords ~ csize, ~ clade, logsz = TRUE, iter = 999, RRPP = TRUE, print.progress = FALSE, data = gdf)
 summary(Allo)
 
 # Plot results
-plot(x = log(Allo$size),
-     y = Allo$pred.val, 
+plot(x = log(Allo.clade$size),
+     y = Allo.clade$pred.val, 
      xlim = c(4.72, 6.17), 
      col = col.clade, 
      pch = 16, 
      main = "Predicted Allometric Shape by Clade",
      xlab = "Log centroid size", 
      ylab = "Predicted shape")
-legend(6.04, 0.108, legend = clade.names, col = col.clade.legend, pch = 16, cex = 0.78)
+legend(5.85, 0.05, legend = clade.names, col = col.clade.legend, pch = 16, cex = 0.78)
+```
+
+### Visualize allometry using the Common Allometric Component (CAC) of shape
+This plot gives an estimate of the average allometric trend within clades. 
+```{r}
+plot(x = log(Allo.clade$size),
+     y = Allo.clade$CAC, 
+     xlim = c(4.72, 6.17), 
+     col = col.clade, 
+     pch = 16, 
+     main = "Common Allometric Component of Shape by Clade",
+     xlab = "Log centroid size", 
+     ylab = "CAC")
+legend(5.85, 0.023, legend = clade.names, col = col.clade.legend, pch = 16, cex = 0.78)
+```
+
+### Visualize allometry using the regression of shape on size (RegScore)
+This method calculates shape scores from the regression of shape on size, and plots these versus size. Different than CAC when multiple groups are considered.
+```{r}
+plot(x = log(Allo.clade$size),
+     y = Allo.clade$Reg.proj, 
+     xlim = c(4.72, 6.17), 
+     col = col.clade,
+     pch = 16, 
+     main = "Regression of shape on size by Clade",
+     xlab = "Log centroid size", 
+     ylab = "RegScore")
+legend(5.85, 0.06, legend = clade.names, col = col.clade.legend, pch = 16, cex = 0.78)
 ```
