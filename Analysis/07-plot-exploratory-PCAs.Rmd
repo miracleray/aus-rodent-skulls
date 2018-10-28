@@ -13,11 +13,12 @@ knitr::opts_knit$set(root.dir = '../aus-rodent-skulls')
 # Plotting exploratory PCAs
 PCAs provide a human-friendly way to visualize shape data. They are a good way to understand what's going on in the data quickly. However, because they artificially collapse the shape variation into orthogonal PC axes, they must be considered exploratory analyses only.
 
-### Load packages
+### Load packages and functions
 ```{r message = FALSE}
 library(stringr)
 library(data.table)
 library(geomorph)
+source("../Functions/utilities.R")  # loads custom functions called by these scripts but defined in the Functions/utilities.R file for conciseness.
 ```
 
 ### Load data from previous steps
@@ -39,48 +40,7 @@ info$Order <- c(1:dim(info)[1])  # preserves specimen order so metadata matches 
 This plot will be similar to the small patch PCA plot from script 05 but using a dataset that's been checked for landmarking errors in script 06.
 
 ### Write function to make pretty PCA plots quickly
-This function adapts code used in script 05.
-```{r}
-PlotPCA <- function(shape, PCx, PCy, col.grp, pch.grp = 16, return.PCA = F) {
-        # Plots PCAs with specimens colored (and optionally given different points) according to groups, reports PC axis variation in %.
-        # 
-        # Args:
-        #    shape: a 3D array of shape coordinates in (p x k x n) format
-        #    PCx: the PC intended for the x-axis.
-        #    PCy: the PC intended for the y-axis, usually x > y. 
-        #    col.grp: a vector of colors ordered in the same way as specimens, usually made with PlotByGroup().
-        #    pch.grp: an optional vector for point shapes, also usually made with PlotByGroup() function. Default is a filled circle.
-        #    return.PCA: If TRUE, returns the PCA data (run with groups set to col.grp) without a fancy plot. Default is FALSE.
-        #
-        # Returns:
-        #    If return.PCA is TRUE, returns the pca object from plotTangentSpace(). If FALSE, returns a plot coloring the PCA by groups specified by col.grp and optionally pch.grp. 
-        
-        pca <- plotTangentSpace(shape, groups = col.grp, axis1 = PCx, axis2 = PCy, verbose = T)
-        
-        if (return.PCA == TRUE) {
-                return(pca)
-                }
-        
-        # Write x and y labels with proportion of variance for PCx and PCy
-        PCs <- pca$pc.summary$importance
-        PCx.per <- round(PCs[2, PCx] * 100, digits = 1)  # % with 1 decimal
-        PCx.lab <- paste("PC", PCx, " (", PCx.per, "%)", sep = "")
-        PCy.per <- round(PCs[2, PCy] * 100, digits = 1)
-        PCy.lab <- paste("PC", PCy, " (", PCy.per, "%)", sep = "")
-        
-        PCA.plot <- plot(x = pca$pc.scores[, PCx],
-                         y = pca$pc.scores[, PCy], 
-                         xlab = PCx.lab, 
-                         ylab = PCy.lab,
-                         asp = TRUE,
-                         col = col.grp, 
-                         pch = pch.grp, 
-                         bg = col.grp,
-                         cex = 1.5,
-                         cex.axis = 1.3, 
-                         cex.lab = 1.3)
-        }
-```
+The function `PlotPCA()` adapts code used in script 05 to quickly plot a PCA with specimens colored by groups and optionally given different point shapes for other attributes. The function also reports PC axis variation in %. 
 
 The chunk below demonstrates how a plot can be exported as a .eps file. These file types can be opened in programs like Adobe Illustrator for minor aesthetic adjustments or be exported to a variety of other filetypes.
 ```{r}
@@ -130,80 +90,12 @@ text(-0.085, 0.01, "Granivore", col = "gold2")
 ## Look for morphospace partitioning by habitat
 So far, most of the variation in the morphospace could be explained by size and genus affiliation, with different genera of similar sizes overlapping quite a bit. This looks like there isn't much differentiation among Australian rodents, but perhaps the differentiation is hidden by geographical region or partitioning of the environment. 
 
-### Write function to subset specimens by region
-Here, we subset the PCA scores by species which inhabit the 7 different ecological regions of Australia. Regions and species distributions therein taken from Breed & Ford 2006.
-```{r}
-## Add argument to FoundInRegion re: include invasives? 
+### Write functions to subset and visualize species morphospace by region
+First we will subset the PCA scores by species which inhabit the 7 different ecological regions of Australia. Regions and species distributions therein taken from Breed & Ford 2006. `FoundInRegion()` subsets existing PCA data by species present in given region(s).
 
-FoundInRegion <- function(spec.info, regions, inc.partial = FALSE) {
-        # Returns a logical vector of which specimens occur in the region(s) of interest, in same order as spec.info table.
-        #
-        # Args:
-        #    spec.info: table of specimen information which codes for presence (1), absence (0), and partial presence (0.5) in 7 columns for the regions listed below, in the order listed below. 
-        #    regions: a list of numbers corresponding to the 7 regions defined by Breed & Ford 2006. Acceptable numbers are:
-        #          1 = "Savannah"
-        #          2 = "AridZone"
-        #          3 = "NEWetForest"
-        #          4 = "NEDryForest"
-        #          5 = "Pilbara"
-        #          6 = "SW"
-        #          7 = "SE"
-        #    inc.partial: if TRUE, includes species who occur in regions less frequently or only under certain conditions. Default is FALSE.
-        #
-        # Returns:
-        #    A logical vector of which specimens occur in the region(s) of interest, in same order as spec.info table.
+Next, we wrote a function, `PointOutDiffSpp()` to give plotting points (pch values) by unique species within each genus.
 
-        n.spec <- dim(spec.info)[1]
-        is.there <- vector(mode = "logical", length = n.spec)
-        first.region <- which(colnames(spec.info) == "Savannah")
-        
-        test.num <- 1
-        if (inc.partial == TRUE) {
-                test.num <- 0.5  # now, test.num picks up partial presence
-        }
-        
-        for (i in regions) {  # for each region of interest...
-                region.col <- first.region + (i - 1)  # finds column index
-                for (i in 1:n.spec)  # ...check if each specimen is there
-                        if (spec.info[i, region.col] >= test.num) {
-                                is.there[i] <- TRUE
-                        }
-        }
-        return(is.there)
-}
-```
-
-Write function to give plotting points (pch values) by unique species within each genus.
-```{r}
-PointOutDiffSpp <- function(spec.info) {
-        # Makes a vector of pch values where species of the same genus have different types of plot points.
-        #
-        # Args:
-        #     spec.info: table of specimen information including columns named, "Genus" and "Species".
-        #
-        # Returns:
-        #     A numeric vector of pch values which can be fed to PlotByGroup() such that species from the same genus have different points. 
-        
-        spec.info$Taxa <- paste(str_sub(spec.info$Genus, 1, 3), str_sub(spec.info$Species, 1, 3), sep = "_")  # Mus musculus -> Mus_mus
-        unique.taxa <- levels(as.factor(spec.info$Taxa))
-        pch.taxa <- rep(21, length(unique.taxa))  # default pch = #21 circle
-        
-        # Give genera with multiple species different points for each spp
-        n.spp <- 1  # variable to count species in a genus
-        for (i in 1:(length(unique.taxa) - 1)) {
-                
-                if (str_sub(unique.taxa[i], 1, 3) == str_sub(unique.taxa[i + 1], 1, 3)) {
-                        pch.taxa[i + 1] <- 21 + n.spp
-                        n.spp <- n.spp + 1      
-                } else {
-                        n.spp <- 1  # reset if no more species in that genus 
-                }
-        }
-        return(pch.taxa)
-}
-```
-
-Plot PCAs with color by taxa for each region
+Finally, we'll combine these functions with a loop to plot PCAs with color by taxa for each region, unique species within each genera having a unique point shape, and a legend for only the species present in each region. 
 ```{r}
 # Get PCA data as used above
 pca <- PlotPCA(shape, 1, 2, col.feed, pch.gld, return.PCA = TRUE)

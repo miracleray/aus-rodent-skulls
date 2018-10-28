@@ -15,11 +15,12 @@ Visualizing landmarks is important both to detect landmarking errors as well as 
 
 We investigate both in this script. In fact, the new landvR package by Dr Thomas Guillerme used _geomorph_'s `plotRefToTarget()` function as its base to visualize landmark variation with a heatmap.
 
-### Load packages
+### Load packages and functions
 ```{r message = FALSE}
 library(stringr)
 library(data.table)
 library(geomorph)
+source("../Functions/utilities.R")  # loads custom functions called by these scripts but defined in the Functions/utilities.R file for conciseness.
 
 # Load libraries (and install if necessary) for landvR package
 if(!require(devtools)) install.packages("devtools")
@@ -44,27 +45,7 @@ We can examine the landmark placements in outliers as compared to the specimen c
 
 Genus abbreviatons and number of outliers were inserted where needed for each genus. This code was only used once: after all landmarks were captured and before the other major analyses were completed.
 
-First, we write a function to help us visualize outlier shape information.
-```{r}
-MatchSpecShape <- function(spec, info, shape){
-        # Matches a specimen name to its 3D shape information.
-        #
-        # Args:
-        #    spec: the specimen dimname provided by plotOutliers(), usually the filename of the specimen provided while landmarking.
-        #    info: the metadata table which contains a column named CatNum.
-        #    shape: 3D shape array in (p x k x n), where n = specimen number.
-        #
-        # Returns:
-        #    The shape data for 1 specimen of name "spec" in format landmarks x coordinates (p x k).
-        
-        categories <- unlist(strsplit(names(spec), "_"))
-        catnum <- categories[str_which(categories, "[A-Z][0-9]")]  # detects CatNum
-        spec.shape <- shape[, , which(info$CatNum == catnum)]
-        return(spec.shape)
-}
-```
-
-We can now use it to compare the outliers to the median specimen in its genus.
+We wrote a function, `MatchSpecShape()` to help us visualize outlier shape information. The function returns the 3D shape of specimen of interest. We can use it to compare the outliers to the median specimen in its genus.
 ```{r}
 # Get shape data for outliers indicated by plots above
 out.1 <- MatchSpecShape(outliers$Mel[1], info, shape)  # 1st outlier in genus Mel
@@ -123,7 +104,6 @@ PC1.var.plot <- procrustes.var.plot(hypothetical.1, hypothetical.2, col = c("yel
 # Plot the histogram of variation in landmarks for this protocol
 var.range <- variation.range(gpagen.shape)
 hist(var.range[, 1])
-
 ```
 
 ### Save plot

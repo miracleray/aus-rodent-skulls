@@ -17,10 +17,11 @@ We hypothesized that the big patch protocol would pick up convergent evolution w
 
 Here we test if the shape patterns produced by the two protocols are different in any way.
 
-### Load packages
+### Load packages and functions
 ```{r message = FALSE}
 library(data.table)
 library(geomorph)
+source("../Functions/utilities.R")  # loads custom functions called by these scripts but defined in the Functions/utilities.R file for conciseness.
 ```
 
 ### Load data from previous steps
@@ -29,37 +30,18 @@ load(file = "../Data/Results/01-big-patch-data.rda")
 load(file = "../Data/Results/01-sm-patch-data.rda")
 load(file = "../Data/Results/02-GPA-data.rda")
 load(file = "../Data/Results/04-data-for-analyses.rda")
+
 ```
 
 ## Plot PCAs for each protocol
-PCAs allow visual comparison of how differently the patch protocols sort the shape data. To assist, we wrote a function to match colors or other plotting attributes to groups within the dataset. 
-```{r}
-PlotByGroup <- function(metadata, column, color.key){
-        # Matches colors or other plotting attributes to each specimen according to a grouping factor.
-        #
-        # Args:
-        #   metadata: metadata table, often created with WriteMetadata().
-        #   column: 1 string matching the column name with target groups.
-        #   color.key: a vector of attributes listed in the same order as the unique group descriptors given by levels(as.factor(metadata$column))
-        # 
-        # Returns:
-        #    A vector of colors the length of specimen number, with colors according to the group descriptor of each individual, ready for plot().
-        
-        col.names <- unlist(dimnames(metadata)[[2]])
-        col.num <- which(col.names == column)
-        grp <- as.factor(metadata[, col.num])
-        names(color.key) <- sort(unique(grp))
-        grp.col <- color.key[match(grp, names(color.key))]
-        return(grp.col)
-}
-```
+PCAs allow visual comparison of how differently the patch protocols sort the shape data. To assist, we wrote a function, `PlotByGroup()`, to match colors or other plotting attributes to groups within the dataset.
 
-We'll use this function to look at the morphospace colored by genus.
+Here, we'll use this function to look at the morphospace colored by genus.
 ```{r}
 # Colors by genus: Hyd Leg Lep Mas Mel Mes Mus Not Pog Pse Rat Uro Xer Zyz
 col.gen <- c("red", "cornflowerblue", "light green", "dark blue", "yellow", "green", "grey", "blue", "magenta", "dark blue", "black", "darkgoldenrod4", "orange", "light blue")
 
-sp.col.gen <- PlotByGroup(big.info, "Genus", col.gen)  # is the same for big and small, tested with all.equal(?)
+sp.col.gen <- PlotByGroup(big.info, "Genus", col.gen)  # is the same for big and small protocols, tested with all.equal()
 ```
 
 ### PCA plot of big patch protocol

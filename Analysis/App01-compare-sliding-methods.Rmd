@@ -15,11 +15,12 @@ While landmarking, all points were slid in Viewbox according to our template and
 
 Here we check whether sliding twice impacted the landmark variation patterns by looking at the variation on a dataset that was not slid in _geomorph_ - i.e. all points were treated as fixed landmarks. 
 
-### Load packages
+### Load packages and functions
 ```{r message = FALSE}
 library(stringr)
 library(data.table)
 library(geomorph)
+source("../Functions/utilities.R")  # loads custom functions called by these scripts but defined in the Functions/utilities.R file for conciseness.
 
 # Load libraries (and install if necessary) for landvR package
 if(!require(devtools)) install.packages("devtools")

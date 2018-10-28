@@ -13,11 +13,12 @@ knitr::opts_knit$set(root.dir = '../aus-rodent-skulls')
 # Allometry
 Changing size is one of the most common ways that organisms can also change their shape. Modifications to growth during development often have a profound impact on adult shape. The tests in this script detect how much size appears to drive shape change in our sample. 
 
-### Load packages
+### Load packages and functions
 ```{r message = FALSE}
 library(stringr)
 library(data.table)
 library(geomorph)
+source("../Functions/utilities.R")  # loads custom functions called by these scripts but defined in the Functions/utilities.R file for conciseness.
 ```
 
 ### Load data from previous steps
@@ -118,38 +119,10 @@ legend(0.078, 0.078, legend = genus.name, col = gen.color, pch = 16, cex = 0.78)
 ```
 Looks like a mess, but interesting that genus _Rattus_ appears to have greater variation than any other genus. 
 
-### Write function to identify invasive specimens
-The output of this function will allow us to subset both the info and shape datasets to include only native species. 
-```{r}
-FindNatives <- function(spec.info, column, invasives) {
-        # Creates a logical vector where TRUE indicates a native species and FALSE indicates an invasive species.
-        #
-        # Args:
-        #    spec.info: table of specimen information that includes a column where the list invasives will distinguish the invasive species.
-        #    column: the column name in spec.info to be used to ID invasives.
-        #    invasives: a list of identifiers (such as species or genus names) for invasive species found in the column above.
-        #
-        # Returns:
-        #    A logical vector in same order as spec.info table where TRUE indicates a native and FALSE indicates an invasive.
-
-        n.spec <- dim(spec.info)[1]
-        is.invasive <- vector(mode = "logical", length = n.spec)
-        test.col <- which(colnames(spec.info) == column)
-        
-        for (i in 1:n.spec) {  # for each specimen...
-                for (k in 1:length(invasives)) {  # ... test each invasive name
-                        if (spec.info[i, test.col] == invasives[k]) {
-                                is.invasive[i] <- TRUE
-                        }
-                }
-        }
-        is.native <- !is.invasive
-        return(is.native)
-}
-```
-
 ## Find predicted allometric shape by clade 
 The Procrustes ANOVA found no significant differences between slopes of different genera. Here we test if this pattern holds for larger clades of Australian rodents. 
+
+We begin subsetting the dataset by only native species using the `FindNatives()` function. 
 ```{r}
 # Remove invasives from the dataset
 is.native <- FindNatives(info.traits, column = "Clade", invasives = c("invRattus", "Mus"))

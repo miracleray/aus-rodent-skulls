@@ -24,9 +24,12 @@ library(data.table)
 library(geomorph)
 ```
 
-## Prepare shape data for analyses in _geomorph_
-_Note that the data is loaded in using a relative directory - not a `setwd()` command. This allows others who have cloned this repo of code and data to still use the code out of the box._
+### Load custom functions written for these analyses
+```{r}
+source("../Functions/utilities.R")  # loads functions called by these scripts but defined in the Functions/utilities.R file for conciseness.
+```
 
+## Prepare shape data for analyses in _geomorph_
 Viewbox exports the data as a 2D array with specimens as columns and X, Y, and Z coordinates as rows for landmark. For _geomorph_, we need to convert this into a 3D array where each specimen has its own 2D array of 3 columns for XYZ coordinates and a row for each landmark. In other words, a 3D array has dimensions (p x k x n), where p is the number of landmarks, k is the dimension (2 or 3), and n is the number of specimens.
 
 We also need to extract the metadata contained in the specimen filenames (exported as column names) and preserve their order so that the metadata matches the order of specimens in the shape data.
@@ -37,8 +40,9 @@ First, to reduce user error, AEM landmarked 20 specimens to familiarize herself 
 Viewbox puts the most recent specimen in the first row of the output .csv file, which is why we take the 20 initial specimens from the last rows of the coordinate dataset. 
 ```{r}
 coords.3D <- read.csv("../Data/Raw/3D_coords.csv", header = T)
-coords.3D <- coords.3D[1:(length(coords.3D) - 40)]  # removes 1st 20 landmarked, with 2 protocols per specimen = 40
+coords.3D <- coords.3D[1:(length(coords.3D) - 40)]  # removes 1st 20 specimens landmarked, with 2 protocols per specimen = 40
 ```
+_Note that the data is loaded in using a relative directory - not a `setwd()` command. This allows others who have cloned this repo of code and data to still use the code out of the box._
 
 ### Convert to 3D array
 Here, we convert the coordinates into a 3D array for _geomorph_. Importantly, we need to remove the 1st column of landmark names. 
@@ -80,37 +84,10 @@ rep.spec <- unique(names[is.rep])
 ```
 
 ### Run function to scrape filenames for metadata
-The `WriteMetadata()` function makes a metadata table in the same order of specimens in the shape array. It takes the 3D array created from Viewbox's coordinate file and a character vector, cols, naming the attributes separated by "_" in specimen filenames. 
+The `WriteMetadata()` function makes a metadata table in the same order of specimens in the shape array, A, created from Viewbox's coordinate data. The function reads the specimen filenames from the 3D array and uses a character vector, cols, to names the attributes separated by "_" in the specimen filenames. It returns a matrix of data ordered by specimen with columns for each attribute.
 
-In this dataset, the filenames look like: Pse_aus_C12345_small_non for genus, species, catalog number, patch protocol, and replicate status. The corresponding cols vector would be cols <- c(Genus, Species, CatNum, Patch, Rep).
+In this dataset, the filenames look like: Pse_aus_C12345_small_non for genus, species, catalog number, patch protocol, and replicate status. Therefore, the corresponding cols vector is as below:
 ```{r}
-WriteMetadata <- function(threeD.array, cols) {
-        # Makes metadata table from specimen filenames for shape coordinates.
-        #
-        # Args:
-        #    threeD.array: 3D array (p x k x n), where p is the number of landmarks, k is the dimension (3), and n is the number of specimens. Assumes the 1st column of landmark names has been removed. 
-        #    cols: a character vector of column names of length n-1, where n is the number of underscores separating metadata information in the specimen filenames. Assumes filenames contain information in the same order and the appropriate names are given in this order in cols. 
-        #
-        # Returns: 
-        #    A dataframe containing the metadata for each specimen in the same order as specimens in the 3D array of shape data.
-        
-        # Remove 'ind' that bilat.symmetry() appends to specimen names
-        names <- gsub("ind", "", dimnames(threeD.array)[[3]])
-
-        # Convert name vectors into data frame
-        categories <- strsplit(names, "_") 
-        my.classifiers <- matrix(unlist(categories), ncol = length(cols), byrow = T) 
-        colnames(my.classifiers) <- cols
-        sp.info <- as.data.frame(my.classifiers)
-        
-        # Add special columns (requires 'Genus' 'Species' 'CatNum' & 'Rep')
-        sp.info$Taxa <- paste(str_sub(sp.info$Genus, 1, 1), str_sub(sp.info$Species, 1, 3), sep = "_")  # turns Mus musculus into M_mus
-        sp.info$All <- with(sp.info, interaction(Genus, Species, CatNum, Rep, sep = "_"))  # required to run geomorph's bilat.symmetry()
-        
-        return(sp.info)
-}
-
-# Create metadata table for this dataset
 cols = c("Genus", "Species","CatNum","Patch", "Rep")
 sp.info <- WriteMetadata(A, cols)
 ```

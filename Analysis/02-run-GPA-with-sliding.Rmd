@@ -22,12 +22,13 @@ For _geomorph_ to handle semi-landmarks correctly, it needs to know:
 
 This code sets up a mostly automated workflow to categorize landmarks and define curves. It will need some information from the user about which fixed landmarks bound which curves in a specific protocol.  
 
-### Load packages
+### Load packages and functions
 ```{r message = FALSE}
 library(stringr)
 library(stringi)
 library(data.table)
 library(geomorph)
+source("../Functions/utilities.R")  # loads custom functions called by these scripts but defined in the Functions/utilities.R file for conciseness.
 ```
 
 ### Load data from previous step
@@ -76,21 +77,6 @@ _geomorph_ needs a "slider matrix" to slide curve semi-landmarks along their app
 
 `StartSlider()` makes a dummy slider matrix in the format _geomorph_ expects. It simply generates the Before and After landmark numbers by subtracting or adding from the current slider point's index number. This scheme works for most of the slider matrix because we named curves in a way so that their names are next to each other, just like they are next to each other on the specimen.
 ```{r}
-StartSlider <- function(cur.num){
-        # Creates a _geomorph_ slider matrix with correct After and Before landmark numbers for semi-landmarks in the middle of their curve. 
-        #
-        # Args:
-        #    cur.num: an integer vector of landmarks categorized as curve semi-landmarks
-        #
-        # Returns:
-        #   A matrix ready for geomorph's gpagen() curves = argument. It will be missing appropriate Before and After numbers for fixed landmarks bounding every curve.
-        Before <- (cur.num - 1)
-        Slider <- cur.num
-        After <- (cur.num + 1)
-        matrix <- cbind(Before, Slider, After)
-        return(matrix)
-}
-
 # Start sliders for both patch protocols
 big.cur.matrix <- StartSlider(big.cur.num)
 sm.cur.matrix <- StartSlider(sm.cur.num)
@@ -123,87 +109,9 @@ LM.key <- read.csv("../Data/Processed/curve_LM_key.csv", header = T)
 ### 3) Complete slider matrix with correct landmark numbers
 Finally, we wrote two functions that connect the landmark names in the Before and After columns with their row number in the shape data and update the slider with the correct numbers. 
 
-The first function, 'Give_LMs()', puts the correct landmark numbers in the slider matrix Before and After columns for one curve. It is run within the second function, `FinishSlider()`.
-```{r}
-FindLMnumbers <- function(i, index, pt.names, key, matrix){
-        # Finds row numbers in shape data for 2 named LMs bounding a curve. 
-        #
-        # Args:
-        #    i: an integer corresponding to the row number of a curve name in the key argument fed to `FinishSlider()`
-        #    index: an integer vector of curve points row numbers
-        #    pt.names: a list of point names in the landmarking protocol
-        #    matrix: a slider matrix with 3 columns to be edited, e.g. one created by the function `StartSlider()`
-        #
-        # Returns:
-        #    A slider matrix with correct landmark numbers for LMs bounding one curve, given by row number, i. 
-              
-        bef.LM <- as.character(key$Before[i])  # Before landmark name
-        
-        # Checks if this landmark is bilateral and if so, appends the appropriate "R" or "L" so the correct landmark number is retrieved later
-        if ((sum(str_detect(pt.names, bef.LM)) > 1)) {
-                side <- str_sub(pt.names[min(index)], -3, -3)
-                bef.LM <- paste(bef.LM, side)
-        } 
-        # Finds & inserts landmark number in slider matrix Before column
-        LM.num <- which(str_detect(pt.names, bef.LM))
-        matrix[min(index), 1] <- LM.num
-                
-        aft.LM <- as.character(key$After[i])  # After landmark name
-        
-        # Checks if this landmark is bilateral
-        if (sum(str_detect(pt.names, aft.LM)) > 1) {
-                side <- str_sub(pt.names[min(index)], -3, -3)
-                aft.LM <- paste(aft.LM, side)
-        } 
-        # Finds & inserts landmark number in After column
-        LM.num <- which(str_detect(pt.names, aft.LM))
-        matrix[max(index), 3] <- LM.num
-                
-        return(matrix)
-}
-```
+The first function, `FindLMnumbers()`, puts the correct landmark numbers in the slider matrix Before and After columns for one curve. It is run within the second function, `FinishSlider()`.
 
-The second function, `FinishSlider()` handles all the information in the LM_key to direct the function, `FindLMnumbers()` above.
-
-`FinishSlider()` returns a completed slider matrix.
-```{r}
-FinishSlider <- function(pt.names, key, matrix){
-        # Corrects numbers for bounding LMs for all curves in a sliding matrix intended for gpagen()'s argument curves. 
-        #
-        # Args:
-        #    pt.names: a character list of point names
-        #    key: the user-generated matrix with column "Curve" listing unique curve names, "Before" and "After" listing bounding landmark names
-        #    matrix: a 3-column matrix initiated by `StartSlider()`.
-        #
-        # Returns
-        #    A completed slider matrix ready for geomorph's gpagen()
-        
-        # Cycles through unique curve names in the template
-        for (i in 1:length(key$Curve)){  # i passed to Give_LMs()
-                curve <- as.character(key$Curve[i]) 
-                
-                # Checks to make sure more than 1 sliding pt in curve
-                # If so, gets the index numbers included in curve
-                # Also extracts letter which might indicate L or R
-                if (sum(str_detect(pt.names, curve) != 0)){
-                        index <- which(str_detect(pt.names, curve))
-                        test.LR <- str_sub(pt.names[min(index)], -3, -3)
-                        
-                        # Tests for and handles center-line curves
-                        if (test.LR != "L" & test.LR != "R"){
-                                matrix <- FindLMnumbers(i, index, pt.names, key, matrix)
-                        } else { # Handles bilateral curves, expecting the coordinates in reverse alphabetical order that lists the R side points immediately before the L side points
-                                midpt <- length(index)/2
-                                R.index <- index[1:midpt]
-                                L.index <- index[(midpt + 1):(midpt*2)]
-                                matrix <- FindLMnumbers(i, R.index, pt.names, key, matrix)
-                                matrix <- FindLMnumbers(i, L.index, pt.names, key, matrix)
-                        }
-                }
-        }
-        return(matrix)
-}
-```
+The second function, `FinishSlider()` handles all the information in the LM_key to direct the function, `FindLMnumbers()` above. `FinishSlider()` returns a completed slider matrix.
 
 At last, creating the slider matrices for two different patch protocols only takes 2 lines of code:
 ```{r}

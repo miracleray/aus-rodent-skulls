@@ -13,12 +13,13 @@ knitr::opts_knit$set(root.dir = '../aus-rodent-skulls')
 # Extract symmetric component of shape data
 We found in Marcy et al. 2018, that using bilateral shape data improved the reliability of landmarking for small 3D-scanned skulls. Here we prepare the data for bilateral symmetry, run _geomorph_'s `bilat.symmetry()` function, and summarize the results of the bilateral symmetry Procrustes ANOVA.
 
-### Load packages
+### Load packages and functions
 ```{r message = FALSE}
 library(stringr)
 library(stringi)
 library(data.table)
 library(geomorph)
+source("../Functions/utilities.R")  # loads custom functions called by these scripts but defined in the Functions/utilities.R file for conciseness.
 ```
 
 ### Load data from previous steps
@@ -29,34 +30,8 @@ load(file = "../Data/Results/02-GPA-data.rda")
 ```
 
 ## Prepare data for running `bilat.symmetry()` function
-To use _geomorph_'s `bilat.symmetry()` function, we needed to write a function to find the bilateral landmark pairs. Like in script 02, we assumed the user included R and L for side and numbered the curve and patch points in a mirror-image pattern relative to one another.
+To use _geomorph_'s `bilat.symmetry()` function, we needed to write a function, `FindPairs()` to find the bilateral landmark pairs. As before, we assumed the user included R and L for side and numbered the curve and patch points in a mirror-image pattern relative to one another.
 ```{r}
-FindPairs <- function(pt.names){
-        # Creates table of paired bilateral landmarks for bilat.symmetry().
-        #
-        # Args:
-        #   pt.names: a character vector of landmark names.
-        #
-        # Returns:
-        #   2 column data table of paired landmarks ready for geomorph's bilat.symmetry()'s land.pair argument.
-        
-        pairs <- data.table("Right" = numeric(), "Left" = numeric())
-        
-        # Removes R and L designations so pairs can be detected
-        no.side.names <- gsub(" R", "", pt.names)
-        no.side.names <- gsub(" L", "", no.side.names)
-        
-        # Checks if point has a pair and if so, their index #s are paired
-        for(i in unique(no.side.names)){
-                index <- str_detect(no.side.names, i)
-                if (sum(index) == 2) {
-                        new.pair <- which(index == TRUE)
-                        pairs <- rbind(pairs, as.list(new.pair))
-                } 
-        }
-        return(pairs)
-}
-
 # Find landmark pair tables for each protocol
 big.land.pairs <- FindPairs(big.pt.names)
 sm.land.pairs <- FindPairs(sm.pt.names)

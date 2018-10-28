@@ -12,12 +12,13 @@ knitr::opts_knit$set(root.dir = '../aus-rodent-skulls')
 # Calculate user error
 Geometric morphometric studies usually require a lot of user-generated data and it's important to assess how much user error is created during the landmarking process. Here, we compare the shape variation between 20 individuals, from a variety of different species, landmarked twice.
 
-### Load packages
+### Load packages and functions
 ```{r message = FALSE}
 library(stringr)
 library(stringi)
 library(data.table)
 library(geomorph)
+source("../Functions/utilities.R")  # loads custom functions called by these scripts but defined in the Functions/utilities.R file for conciseness.
 ```
 
 ### Load data from previous steps
@@ -57,45 +58,7 @@ sm.err.info <- sm.bY.info[error.data, ]
 ```
 
 ## Calculate user error aka Repeatability
-Here, we calculate repeatability from formulas 1-3 in Fruciano 2016. The function below was modified from Marcy et al 2018. 
-```{r}
-RepAbility <- function(coords, ids, n.Rep, print = TRUE, export = FALSE, filename = NULL) {
-        # Calculates repeatability (R) for GMM studies.
-        #
-        # Args:
-        #    coords: a 3D array (p x k X n) of shape coordinates.
-        #    ids: a list of identifiers used to find replicates, e.g. CatNum.
-        #    n.Rep: number of repetitions taken for each individual
-        #    print: if TRUE, prints ANOVA and R to the console.
-        #    export: if TRUE, exports ANOVA and R to .csv.
-        #    filename: the filename used to save the .csv file.
-        #
-        # Returns:
-        #    A table with the ANOVA and the value of R, repeatability.
-        
-        # Calculations from formulas 1-3 in Fruciano 2016
-        r.gdf <- geomorph.data.frame(coords = coords, ind = factor(ids))
-        rep.er <- procD.lm(coords ~ ind, data = r.gdf, iter = 999)
-        S.sq.A <- ((rep.er$aov.table$MS[1] - rep.er$aov.table$MS[2]) / n.Rep)  # among-individuals variance component: 
-        S.sq.W <- rep.er$aov.table$MS[2]  # within-individual variance
-        R <- S.sq.A / (S.sq.W + S.sq.A)  # analogue of the intraclass correlation coeffiecent
-        
-        table <- rep.er$aov.table
-        table$Repeatability <- R
-        
-        if (print) {
-                print(rep.er$aov.table)
-                cat("\n","Repeatability =", R)
-        }
-        if (export) {
-                write.csv(table, file = paste(filename, ".csv", sep = ""))
-        } else {
-                return (table)
-        }
-}
-```
-
-### Calculate repeatability for both patch protocols
+Here, we calculate repeatability for each patch protocol from formulas 1-3 in Fruciano 2016. The function `RepAbility()` was modified from Marcy et al 2018. 
 ```{r}
 RepAbility(big.err.shape, big.err.info$CatNum, n.Rep = 2)
 RepAbility(sm.err.shape, sm.err.info$CatNum, n.Rep = 2)
