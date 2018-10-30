@@ -10,30 +10,60 @@ knitr::opts_chunk$set(echo = TRUE)
 knitr::opts_knit$set(root.dir = '../aus-rodent-skulls')
 ```
 # Calculate user error
-Geometric morphometric studies usually require a lot of user-generated data and it's important to assess how much user error is created during the landmarking process. Here, we compare the shape variation between 20 individuals, from a variety of different species, landmarked twice.
+Geometric morphometric studies usually require a lot of user-generated data and it's important to assess how much user error is created during the landmarking process. 
 
-### Load packages and functions
+First, we visualize whether any outliers can be explained by mistakes in landmark placement (e.g. a point "falling through"" the nasal to land on the inner basicranium).
+
+Second, we compare the shape variation between 20 individuals, from a variety of different species, landmarked twice to calculate the intra-observer (i.e. digitizer) error.
+
+### Load packages, functions, and data from previous steps
 ```{r message = FALSE}
 library(stringr)
 library(stringi)
 library(data.table)
 library(geomorph)
-source("../Functions/utilities.R")  # loads custom functions called by these scripts but defined in the Functions/utilities.R file for conciseness.
+source("../Functions/utilities.R")  # custom functions defined in utilities.R for conciseness.
+load(file = "../Data/Results/01-big-data.rda")
+load(file = "../Data/Results/01-sm-data.rda")
 ```
 
-### Load data from previous steps
+## 1) Check for ouliers and fix landmarking errors
+_geomorph_ comes with a handy function to check for outliers. Since our sample has a wide range of species, we decided to include the groups factor. This means the plotOutliers returns likely outliers for each genus instead of the group as a whole. When groups were not defined, only large species were returned as "outliers". 
 ```{r}
-load(file = "../Data/Results/01-big-patch-data.rda")
-load(file = "../Data/Results/01-sm-patch-data.rda")
-load(file = "../Data/Results/02-GPA-data.rda")
-load(file = "../Data/Results/03-big-bilat-data.rda")
-load(file = "../Data/Results/03-sm-bilat-data.rda")
+# Plot outliers by genus for big patch dataset
+outliers <- plotOutliers(big.bY.shape, groups = big.sp.info$Genus, inspect.outliers = T)
 ```
 
-## Separate error measurement datasets from main datasets
-Now that the shape data have been processed via GPA and bilateral symmetry, we can separate the data intended to measure user error from the main data for the remaining analyses. 
+Run again for the small patch protocol dataset:
+```{r}
+outliers <- plotOutliers(sm.bY.shape, groups = sm.sp.info$Genus, inspect.outliers = T)
+```
 
-First, remove the replicates from the main shape data for both small and large patch protocols. Create corresponding metadata tables. These data will be used for the majority of remaining analyses.
+### Visualize why they are outliers by looking at landmark vectors
+We can examine the landmark placements in outliers as compared to the specimen closest to the median, based on the plots above. This allows us to determine if there were any major landmarking errors that might impact further analyses.
+
+Genus abbreviatons and number of outliers were inserted where needed for each genus. This code was only used once: after all landmarks were captured and before the other major analyses were completed.
+
+We wrote a function, `MatchSpecShape()` to help us visualize outlier shape information. The function returns the 3D shape of specimen of interest. We can use it to compare the outliers to the median specimen in its genus.
+```{r}
+# Get shape data for outliers indicated by plots above
+out.1 <- MatchSpecShape(outliers$Mel[1], sm.bY.info, sm.bY.shape)  # 1st outlier in genus Mel
+out.2 <- MatchSpecShape(outliers$Mel[2], sm.bY.info, sm.bY.shape)  # 2nd outlier in genus Mel
+
+# Compare outlier specimens to median specimen
+med.spec <- outliers$Mel[median(outliers$Mel)]  # median specimen in Mel
+med.shape <- MatchSpecShape(med.spec, sm.bY.info, sm.bY.shape)
+
+# Compare landmark locations in outlier specimens to median specimen
+plotRefToTarget(med.shape, out.1, method = "vector", label = FALSE)
+plotRefToTarget(med.shape, out.2, method = "vector", label = FALSE)
+```
+**Repeat the above for each genus/patch protocol as needed. When landmarking errors are found, fix in Viewbox, export new coordinates, and begin again from script 01.** 
+
+## 2) Calculate intra-observer error
+Now that the shape data have been processed via GPA and bilateral symmetry and corrected for obvious landmarking errors, we can separate the data intended to measure user error from the main data for the remaining analyses. 
+
+Make the datasets to be used for the rest of the analyses
 ```{r}
 main <- which(big.bY.info$Rep == "non")
 big.shape <- big.bY.ss[, , main]
@@ -43,31 +73,31 @@ sm.shape <- sm.bY.ss[, , main]  # main is the same for big and small patch proto
 sm.info <- sm.bY.info[main, ]
 ```
 
-Second, create an error measurement dataset for both protocols that includes replicates and the specimens they duplicated (i.e. each CatNum should have two entries, one labeled "ERR", and one labled "non"). These data will be used to calculate user error. 
+Create an error measurement dataset for both protocols that includes replicates and the specimens they duplicated (i.e. each CatNum should have two entries, one labeled "ERR", and one labled "non"). These data will be used to calculate user error. 
 ```{r}
 # Find index for both versions of specimens with replicates using rep.spec list make in script 01.
 rep.CatNums <- as.character(str_sub(rep.spec, 9, -1))  # isolate CatNum
-error.data <- which(sm.bY.info$CatNum %in% rep.CatNums)  # error.data is the same for small and big patch protocols, tested with all.equal()
+error.data <- which(sm.sp.info$CatNum %in% rep.CatNums)  # error.data is the same for small and big patch protocols, tested with all.equal()
 
 # Subset shape and metadata tables for each protcol
-big.err.shape <- big.bY.ss[, , error.data]
-big.err.info <- big.bY.info[error.data, ]
+big.err.shape <- big.bY.shape[, , error.data]
+big.err.info <- big.sp.info[error.data, ]
 
-sm.err.shape <- sm.bY.ss[, , error.data]
-sm.err.info <- sm.bY.info[error.data, ]
+sm.err.shape <- sm.bY.shape[, , error.data]
+sm.err.info <- sm.sp.info[error.data, ]
 ```
 
-## Calculate user error aka Repeatability
+### Calculate user error aka Repeatability
 Here, we calculate repeatability for each patch protocol from formulas 1-3 in Fruciano 2016. The function `RepAbility()` was modified from Marcy et al 2018. 
 ```{r}
 RepAbility(big.err.shape, big.err.info$CatNum, n.Rep = 2)
 RepAbility(sm.err.shape, sm.err.info$CatNum, n.Rep = 2)
 ```
 
-## Calculate repeatability without patch points
-Patch points could be artificially inflating our repeatability numbers. To test this, we calculated repeatability for the small and big patch datasets with patch points removed. 
+### Calculate repeatability without patch points
+Patch points could be artificially inflating our repeatability numbers since they are placed automatically by the Viewbox software. To test this, we calculated repeatability for the small and big patch datasets with patch points removed. 
 
-Note that removing patch points will remove 16 more points from the big patch protocol than the small patch protocol. 
+Note that removing patch points will remove 16 more points from the big patch protocol than from the small patch protocol. 
 ```{r}
 # Subset the shape datasets for only fixed LMs and curve semi-LMs
 big.patchless.shape <- big.err.shape[-big.pat.num, , ] 
@@ -81,7 +111,28 @@ Taking out patch points does decrease the repeatability by about 1% for each pro
 Big Patch is 92.6% with patches, 91.6% without patches (140 points removed)
 Small Patch: 92.5% with patches, 91.7% without patches (124 points removed) 
 
+### Add centroid size from gpagen() to symmetric shape metadata
+Since the bilat.symmetry() function changed the order of specimens, we need to add the centroid size information from gpagen() to the new metadata table we just made for the symmetric component of shape.
+```{r}
+# Remove specimen filenames from dimnames of centroid size vectors and combine CatNum with centroid data
+big.CatSize <- as.data.table(cbind(as.vector(big.sp.info$CatNum), unname(big.Y$Csize)))  # data from GPA in script 02
+names(big.CatSize) <- c("CatNum", "Csize")
+big.CatSize$Csize <- as.numeric(big.CatSize$Csize)  # coerce back to numeric
+
+sm.CatSize <- as.data.table(cbind(as.vector(sm.sp.info$CatNum), unname(sm.Y$Csize)))
+names(sm.CatSize) <- c("CatNum", "Csize")
+sm.CatSize$Csize <- as.numeric(sm.CatSize$Csize)
+
+# Remove error replicates from centroid size table
+big.CatSize <- big.CatSize[which(big.sp.info$Rep == "non"), ]
+sm.CatSize <- sm.CatSize[which(sm.sp.info$Rep == "non"), ]
+
+# Merge Csize with bilateral metadata for each patch protocol
+big.info <- merge(big.info, big.CatSize, by = "CatNum", sort = F)
+sm.info <- merge(sm.info, sm.CatSize, by = "CatNum", sort = F)
+```
+
 ### Save intermediate data
 ```{r}
-save(big.shape, big.info, sm.shape, sm.info, file = "../Data/Results/04-data-for-analyses.rda")
+save(big.shape, big.info, sm.shape, sm.info, file = "../Data/Processed/02-data-for-analyses.rda")
 ```

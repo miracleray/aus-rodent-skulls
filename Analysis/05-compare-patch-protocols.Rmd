@@ -17,21 +17,70 @@ We hypothesized that the big patch protocol would pick up convergent evolution w
 
 Here we test if the shape patterns produced by the two protocols are different in any way.
 
-### Load packages and functions
+### Load packages, functions, and data from previous steps
 ```{r message = FALSE}
 library(data.table)
 library(geomorph)
-source("../Functions/utilities.R")  # loads custom functions called by these scripts but defined in the Functions/utilities.R file for conciseness.
+source("../Functions/utilities.R")  # custom functions
+load(file = "../Data/Processed/02-data-for-analyses.rda")
+
+# Load libraries (and install if necessary) for landvR package
+if(!require(devtools)) install.packages("devtools")
+if(!require(dispRity)) install.packages("dispRity")
+if(!require(landvR)) install_github("TGuillerme/landvR")
 ```
 
-### Load data from previous steps
+# Visualizing landmark variation
+Visualizing landmarks is important both to detect landmarking errors as well as to better understand which parts of the specimen vary the most. 
+
+We investigate both in this script. In fact, the new landvR package by Dr Thomas Guillerme used _geomorph_'s `plotRefToTarget()` function as its base to visualize landmark variation with a heatmap.
+
+## Landmark variation heatmaps
+Assuming that all landmarks are correctly placed now, we can use a variation of the `procrustes.var.plot()` function by Dr Thomas Guillerme to see how landmarks vary within and between different taxa. 
+
+Much of the below is adapted from the [vignette written by Dr Guillerme here](https://cdn.rawgit.com/TGuillerme/landvR/8a6a6bd5/inst/vignettes/Landmark_partition_test.html).
 ```{r}
-load(file = "../Data/Results/01-big-patch-data.rda")
-load(file = "../Data/Results/01-sm-patch-data.rda")
-load(file = "../Data/Results/02-GPA-data.rda")
-load(file = "../Data/Results/04-data-for-analyses.rda")
+# Find mean configuration
+sm.consensus <- (select.procrustes(sm.shape, selector = mean))[[1]]
 
+# Measure spherical coordinates differences from the mean
+diff.from.mean <- coordinates.difference(coordinates = sm.shape, reference = sm.consensus, type = "spherical")
 ```
+
+To test the hypothesis that each landmark's variation from the mean configuration is above expected, we can use the PC axes from a PCA.
+```{r}
+# Ordinate the data
+twoD.shape <- two.d.array(sm.shape)
+ordination <- stats::prcomp(twoD.shape)
+
+# Force the symmetric component of shape into class "gpagen" (required for variation.range)
+sm.gpagen.shape <- list()
+sm.gpagen.shape$coords <- sm.shape
+sm.gpagen.shape$consensus <- sm.consensus
+class(sm.gpagen.shape) <- "gpagen"
+
+# Measure extremes of variation from mean on PC1
+PC1.var <- variation.range(sm.gpagen.shape, return.ID = FALSE, axis = 1, ordination = ordination, type = "spherical")
+```
+
+The next step is to make a heatmap showing the size of variation and direction of movement for each landmark in the dataset, comparing between the min and max specimens along PC1.
+```{r}
+# Wrap specimens on the tangent space
+wrap.PCA <- plotTangentSpace(sm.shape, verbose = FALSE)
+
+# Select extreme specimens (the ones that make the warp-meshes)
+hypothetical.1 <- wrap.PCA$pc.shapes[[1]]
+hypothetical.2 <- wrap.PCA$pc.shapes[[2]]
+
+# Plot the range of variation along PC1 using a heat color scheme
+PC1.var.plot <- procrustes.var.plot(hypothetical.1, hypothetical.2, col = c("yellow", "orange", "red"), col.val = PC1.var[, "radius"], labels = F)
+
+# Plot the histogram of variation in landmarks for this protocol
+var.range <- variation.range(sm.gpagen.shape)
+hist(var.range[, 1])
+```
+
+## REPEAT FOR BIG PATCH PROTOCOL
 
 ## Plot PCAs for each protocol
 PCAs allow visual comparison of how differently the patch protocols sort the shape data. To assist, we wrote a function, `PlotByGroup()`, to match colors or other plotting attributes to groups within the dataset.
@@ -96,27 +145,6 @@ plot(x = sm.pca$pc.scores[, 1],
 The patch protocols look very similar on the PCAs, which suggests that they do not capture shape variation differently from one another. To test this, we performed two different Procrustes ANOVAs on each protocol's dataset:
 1) shape ~ genus 
 2) shape ~ centroid size (a proxy for body size), which is a test for allometry
-
-### Add centroid size from gpagen() to symmetric shape metadata
-Since the bilat.symmetry() function changed the order of specimens, we need to add the centroid size information from gpagen() to the new metadata table we just made for the symmetric component of shape.
-```{r}
-# Remove specimen filenames from dimnames of centroid size vectors and combine CatNum with centroid data
-big.CatSize <- as.data.table(cbind(as.vector(big.sp.info$CatNum), unname(big.Y$Csize)))  # data from GPA in script 02
-names(big.CatSize) <- c("CatNum", "Csize")
-big.CatSize$Csize <- as.numeric(big.CatSize$Csize)  # coerce back to numeric
-
-sm.CatSize <- as.data.table(cbind(as.vector(sm.sp.info$CatNum), unname(sm.Y$Csize)))
-names(sm.CatSize) <- c("CatNum", "Csize")
-sm.CatSize$Csize <- as.numeric(sm.CatSize$Csize)
-
-# Remove error replicates from centroid size table
-big.CatSize <- big.CatSize[which(big.sp.info$Rep == "non"), ]
-sm.CatSize <- sm.CatSize[which(sm.sp.info$Rep == "non"), ]
-
-# Merge Csize with bilateral metadata for each patch protocol
-big.info <- merge(big.info, big.CatSize, by = "CatNum", sort = F)
-sm.info <- merge(sm.info, sm.CatSize, by = "CatNum", sort = F)
-```
 
 ### Run shape ~ genus * Csize ANOVAs on each protocol:  
 Big patch protocol:
