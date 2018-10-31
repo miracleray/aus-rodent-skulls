@@ -2,6 +2,7 @@
 *.pdf
 *.html
 *.eps
+*.png
 
 ## R ignore
 *.Rhistory
