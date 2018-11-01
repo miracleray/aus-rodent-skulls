@@ -27,7 +27,7 @@ load(file = "../Data/Results/01-big-data.rda")
 load(file = "../Data/Results/01-sm-data.rda")
 ```
 
-## 1) Check for ouliers and fix landmarking errors
+## 1) Check for outliers and fix landmarking errors
 _geomorph_ comes with a handy function to check for outliers. Since our sample has a wide range of species, we decided to include the groups factor. This means the plotOutliers returns likely outliers for each genus instead of the group as a whole. When groups were not defined, only large species were returned as "outliers". 
 ```{r}
 # Plot outliers by genus for big patch dataset
