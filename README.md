@@ -40,5 +40,5 @@ These analyses provide support for the supplementary materials and some observat
 
 * **App01-compare-sliding-methods.Rmd** Prepares the matrices needed by *geomorph* to slide patch and curve semi-landmarks. Explains landmark naming conventions needed to use this script on different datasets. Runs GPA with sliding semi-landmarks and bilateral symmetry on both patch protocols. Visualizes differences using heatmaps from `landvR`.
 
-### Custom functions in the utlity file 
+### Custom functions in the utility file 
 The analyses call custom functions that are all defined in the ..Data/Functions/utilities.R file.
