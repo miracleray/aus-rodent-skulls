@@ -13,17 +13,13 @@ knitr::opts_knit$set(root.dir = '../aus-rodent-skulls')
 # Plotting exploratory PCAs
 PCAs provide a human-friendly way to visualize shape data. They are a good way to understand what's going on in the data quickly. However, because they artificially collapse the shape variation into orthogonal PC axes, they must be considered exploratory analyses only.
 
-### Load packages and functions
+### Load packages, functions, and data
 ```{r message = FALSE}
 library(stringr)
 library(data.table)
 library(geomorph)
-source("../Functions/utilities.R")  # loads custom functions called by these scripts but defined in the Functions/utilities.R file for conciseness.
-```
-
-### Load data from previous steps
-```{r}
-load(file = "../Data/Results/05-sm-data-for-analyses.rda")
+source("../Functions/utilities.R")  # custom functions
+load(file = "../Data/Processed/03-sm-data-for-analyses.rda")
 ```
 
 ## Exploratory analyses with PCAs
@@ -150,13 +146,7 @@ for (i in 1:7) {
 }
 ```
 
-Plot PCAs (color by taxa) for forested regions by terrestrial vs arboreal
-```{r}
-
-```
-
-
 ### Save intermediate data
 ```{r}
-save(info.traits, col.feed, pch.gld, file = "../Data/Results/07-sm-data-w-traits.rda")
+save(info.traits, col.feed, pch.gld, file = "../Data/Results/04-sm-data-w-traits.rda")
 ```

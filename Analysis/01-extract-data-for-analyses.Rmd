@@ -44,7 +44,7 @@ Viewbox puts the most recent specimen in the first row of the output .csv file, 
 coords.3D <- read.csv("../Data/Raw/3D_coords.csv", header = T)
 coords.3D <- coords.3D[1:(length(coords.3D) - 40)]  # removes 1st 20 specimens landmarked, with 2 protocols per specimen = 40
 ```
-_Note that the data is loaded in using a relative directory - not a `setwd()` command. This allows others who have cloned this repo of code and data to still use the code out of the box._
+_Note that the data is loaded in using a relative directory - not a `setwd()` command. This allows others who have cloned this repo of data and code to still use the code out of the box._
 
 ### Convert to 3D array
 Here, we convert the coordinates into a 3D array for _geomorph_. Importantly, we need to remove the 1st column of landmark names. 
@@ -60,7 +60,7 @@ The coordinate data is just shape data unless we can extract any information the
 ### Fix naming of replicate filenames (included to measure user error)
 Interspersed throughout the data collection process, AEM landmarked 20 specimens twice. Their specimen names included "_ERR", however, not always in the same place in the filename. 
 
-We correct the naming scheme to be machine-readable and in the process create a list of specimen names which were landmarked twice. In script 02-calculate-user-error.Rmd, we use this list to analyze user error relative to variation in our sample. 
+We correct the naming scheme to be machine-readable and in the process create a list of specimen names which were landmarked twice. In script 02-calculate-user-error.Rmd, we use this list to analyze user error relative to (biological) variation in our sample.
 ```{r}
 # Detect replicates
 names <- dimnames(A)[[3]]
@@ -103,7 +103,7 @@ no.XYZ <- str_sub(pt.names, 3, -1)  # removes XYZ appended by Viewbox
 u.pt.names<- unique(no.XYZ)  # returns unique point and curve names
 ```
 
-### Split shape dataset into big and small patch datasets
+### Split shape dataset into separate big and small patch datasets
 ```{r}
 # Create data for big patch protocol
 big.data <- sp.info$Patch == "big"
@@ -129,10 +129,17 @@ big.Y <- gpagen(B, Proj = TRUE, ProcD = TRUE)
 sm.Y <- gpagen(S, Proj = TRUE, ProcD = TRUE)
 ```
 
-### Prepare data for running `bilat.symmetry()` function
+### Add centroid size from gpagen() to metadata
+Simply join the centroid size given by `gpagen()` to the metadata table for each dataset. These data will be used later to quantify allometry.
+```{r}
+big.sp.info$Csize <- unname(big.Y$Csize)
+sm.sp.info$Csize <- unname(sm.Y$Csize)
+```
+
+### Prepare data for running `bilat.symmetry()`
 To use _geomorph_'s `bilat.symmetry()` function, we needed to write a function, `FindPairs()` to find the bilateral landmark pairs. We assumed the user followed the following rules:
 
-1. For bilateral names, "R" and "L" designate sides after the landmark's name.
+1. For bilateral names, "R" and "L" designate sides at very end of the landmark's name.
 
 2. For curve points, "1", "2", "3", etc ascend in one direction, with bilateral curves sharing the same direction (e.g. numbers go up Anterior -> Posterior on both sides).
 
@@ -142,15 +149,17 @@ _For example, "SUR occipital suture R 2" is anterior to "SUR occipital suture R 
 
 _For example, "PAT auditory bulla R 3" and "PAT auditory bulla L 3" are in mirror image locations on their respective patches_
 ```{r}
-# Write landmark pair tables for each protocol
+# Make landmark pair tables for each protocol
 big.land.pairs <- FindPairs(big.pt.names)
 sm.land.pairs <- FindPairs(sm.pt.names)
 ```
 
 ### Run bilateral GPA
-Now we are ready to re-run the generalized Procrustes alignment using bilateral landmark designations, extract the symmetric component of shape, and make new metadata tables.
+Now we are ready to re-run the generalized Procrustes alignment using bilateral landmark designations and extract the symmetric component of shape.
 
 The two bilateral GPAs can take some time (~10min total to run).
+
+WARNING: the `bilat.symmetry()` function will change the order of specimens in the shape file IF you have any non-unique names in the vector given to argument `ind =` of `bilat.symmetry()`. For example, if we had used `$CatNum`, then we would have 2 of the same CatNums for specimens with replicates. To avoid this, have a column for Replicate Status ("Rep" in this script), merge this with the CatNum column and any other columns of interest, and use this `$All` column for the `ind =` argument of `bilat.symmetry()`.
 ```{r}
 # Perform bilateral procrustes alignment on each patch protocol
 big.biY <- bilat.symmetry(big.Y$coords, ind = big.sp.info$All, object.sym = T, replicate = NULL, side = NULL, land.pairs = big.land.pairs)
@@ -171,22 +180,15 @@ summary(big.biY)
 # Small patch protocol
 summary(sm.biY)
 ```
-Interestingly, we observe that the big patch protocol has elevated asymmetry relative to the small patch protocol (side Rsq = .11 vs .04). We suspect this is because it was impossible to get a perfectly mirror-image-matched large patch on the dorsal surface of the skull in Viewbox. Perhaps this asymmetry, hard-coded into the patch protocol, contributed to an increase in asymmetry measured compared to the small patch protocol. The small patch protocol had fewer patch points and it was easier to make mirror-image small patches.
+Interestingly, we observe that the big patch protocol has elevated asymmetry relative to the small patch protocol (side Rsq = .11 vs .04, respectively). We suspect this is because it was impossible to get a perfectly mirror-image-matched large patch on the dorsal surface of the skull in Viewbox. Perhaps this asymmetry, hard-coded into the patch protocol, contributed to an increase in asymmetry measured compared to the small patch protocol. The small patch protocol had fewer patch points and it was easier to make mirror-image small patches.
 
-### Add centroid size from gpagen() to symmetric shape metadata
-Here, we simply join the centroid size generated by `gpagen()` to the metadata tables for each dataset. These data will be used later in the script to test allometry.
-
-WARNING: the `bilat.symmetry()` function will change the order of specimens IF you have any non-unique names in the vector given to argument `ind =` of `bilat.symmetry()`. For example, if we used `$CatNum`, then we would have 2 of the same CatNums for specimens with replicates. To avoid this, have a column for Replicate Status ("Rep" in this script) and use the `$All` column for the `ind =` argument of `bilat.symmetry()`.
-```{r}
-big.sp.info$Csize <- unname(big.Y$Csize)
-sm.sp.info$Csize <- unname(sm.Y$Csize)
-```
+### TODO: test asymmetry without patches
 
 ### Save intermediate data
 Now that we have extracted the 2 patch protocol datasets and the specimen metadata, we are ready for the next analysis step: 02-calculate-user-error.Rmd.
 
 Here we save the R objects we will need for later steps so this script does not have to be run again.
 ```{r}
-save(big.bY.shape, big.sp.info, rep.spec, file = "../Data/Processed/01-big-data.rda")
-save(sm.bY.shape, sm.sp.info, file = "../Data/Processed/01-sm-data.rda")
+save(big.bY.shape, big.sp.info, sm.bY.shape, sm.sp.info, rep.spec, big.pt.names, sm.pt.names, file = "../Data/Processed/01-bilat-data-w-ERR.rda")
+save(B, S, big.pt.names, sm.pt.names, big.sp.info, sm.sp.info, rep.spec, file = "../Data/Processed/01-data-for-appendix.rda")
 ```
