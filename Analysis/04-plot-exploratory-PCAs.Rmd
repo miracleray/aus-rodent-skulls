@@ -22,21 +22,18 @@ source("../Functions/utilities.R")  # custom functions
 load(file = "../Data/Processed/03-sm-data-for-analyses.rda")
 ```
 
-## Exploratory analyses with PCAs
+### Exploratory analyses with PCAs
 Here, we explore the variation in rodent skulls by coloring the PCA plots by genus, taxa, and by traits.
 
 Since we are going to add several columns to the metadata table, we'll remove columns no longer needed past the bilateral symmetry and replicate handling stages. 
 ```{r}
 # Prep metadata for column additions
-info <- info[, c(-4,-6)]  # removes unnecessary "Rep" and "All" columns
+info <- info[, c(-4, -5, -7)]  # removes now-unnecessary columns
 info$Order <- c(1:dim(info)[1])  # preserves specimen order so metadata matches shape data
 ```
 
 ## Plot PCA by genus for small patch dataset with no landmarking errors
-This plot will be similar to the small patch PCA plot from script 05 but using a dataset that's been checked for landmarking errors in script 06.
-
-### Write function to make pretty PCA plots quickly
-The function `PlotPCA()` adapts code used in script 05 to quickly plot a PCA with specimens colored by groups and optionally given different point shapes for other attributes. The function also reports PC axis variation in %. 
+The function `PlotPCA()` adapts code quickly plots a PCA with specimens colored by groups and optionally given different point shapes for other attributes. The function also reports PC axis variation in %. 
 
 The chunk below demonstrates how a plot can be exported as a .eps file. These file types can be opened in programs like Adobe Illustrator for minor aesthetic adjustments or be exported to a variety of other filetypes.
 ```{r}
@@ -55,7 +52,7 @@ Trait information was gathered from the book, Native Mice and Rats by Bill Breed
 # Add trait data to the metadata table, info and preserve specimen order
 traits <- read.csv("../Data/Processed/in_ex_traits.csv", header = TRUE)
 traits$Taxa <- paste(str_sub(traits$Genus, 1, 1), str_sub(traits$Species, 1, 3), sep = "_")  # make matching Taxa column
-info.traits <- merge(info, traits[ , -c(1, 2)], by = "Taxa", sort = F)  # adds only new columns from the trait data frame
+info.traits <- merge(info, traits[, -c(1, 2)], by = "Taxa", sort = F)  # adds only new columns from the trait data frame
 info.traits <- info.traits[order(info.traits$Order), ] 
 ```
 
@@ -107,7 +104,7 @@ for (i in 1:7) {
         pc.region <- as.data.frame(pc.scores[in.region, ])
         
         # Colors by genus, points by unique species in a genus
-        col.gen.region <- PlotByGroup(info.region, "Genus", col.gen)  # col.gen colors defined in script 05
+        col.gen.region <- PlotByGroup(info.region, "Genus", col.gen)
         pch.tax.legend <- PointOutDiffSpp(info.region)
         pch.tax.region <- PlotByGroup(info.region, "Taxa", pch.tax.legend)
         
@@ -116,7 +113,7 @@ for (i in 1:7) {
         
         # Make color vector for legend points
         genera.in.region <- which(levels(info.traits$Genus) %in% sort(unique(info.region$Genus)))
-        col.gen.reg <- col.gen[genera.in.region]  # subset col.gen by genera in region
+        col.gen.reg <- col.gen[genera.in.region]  # subset by genera in region
         unique.taxa <- sort(unique(info.region$Legend))
         legend.genus <- substr(unique.taxa, 1, 3)
         names(col.gen.reg) <- unique(legend.genus)
@@ -148,5 +145,5 @@ for (i in 1:7) {
 
 ### Save intermediate data
 ```{r}
-save(info.traits, col.feed, pch.gld, file = "../Data/Results/04-sm-data-w-traits.rda")
+save(info.traits, col.feed, pch.gld, file = "../Data/Processed/04-sm-data-w-traits.rda")
 ```
