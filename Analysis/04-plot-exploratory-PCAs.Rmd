@@ -47,7 +47,7 @@ dev.off()
 ## PCA plot by diet and guild
 This PCA plot colors specimen points by diet and gives them a point shape based on guild, i.e. where they spend most of their time foraging: aquatic, arboreal, or terrestrial.
 
-Trait information was gathered from the book, Native Mice and Rats by Bill Breed and Fred Ford (2006). 
+Trait information was gathered from the book, Native Mice and Rats by Dr.s Bill Breed and Fred Ford (2007). 
 ```{r}
 # Add trait data to the metadata table, info and preserve specimen order
 traits <- read.csv("../Data/Processed/in_ex_traits.csv", header = TRUE)
@@ -84,7 +84,7 @@ text(-0.085, 0.01, "Granivore", col = "gold2")
 So far, most of the variation in the morphospace could be explained by size and genus affiliation, with different genera of similar sizes overlapping quite a bit. This looks like there isn't much differentiation among Australian rodents, but perhaps the differentiation is hidden by geographical region or partitioning of the environment. 
 
 ### Write functions to subset and visualize species morphospace by region
-First we will subset the PCA scores by species which inhabit the 7 different ecological regions of Australia. Regions and species distributions therein taken from Breed & Ford 2006. `FoundInRegion()` subsets existing PCA data by species present in given region(s).
+First we will subset the PCA scores by species which inhabit the 7 different ecological regions of Australia. Regions and species distributions therein taken from Breed & Ford 2007. `FoundInRegion()` subsets existing PCA data by species present in given region(s).
 
 Next, we wrote a function, `PointOutDiffSpp()` to give plotting points (pch values) by unique species within each genus.
 
