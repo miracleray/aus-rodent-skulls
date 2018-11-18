@@ -22,7 +22,7 @@ Museum metadata provided by Curators:
 * [Western Australian Museum specimens]() - coming soon
 
 Ecological metadata:
-* [Trait data from Breed & Ford 2006](/Data/Processed/in_ex_traits.csv)
+* [Trait data from Breed & Ford 2007](/Data/Processed/in_ex_traits.csv)
     
 ## Analyses
 The analysis workflow is broken down into smaller scripts explained below. Each script loads data created by the script before, so this workflow requires you to run the scripts in order. The intermediate data -- stored as .rda files in the /Data/Processed folder -- are too large to upload to Github. 

@@ -17,21 +17,17 @@ Here we check whether sliding twice impacted the landmark variation patterns by 
 
 ### Load packages and functions
 ```{r message = FALSE}
-library(stringr)
-library(data.table)
-library(geomorph)
-source("../Functions/utilities.R")  # loads custom functions called by these scripts but defined in the Functions/utilities.R file for conciseness.
-
 # Load libraries (and install if necessary) for landvR package
 if(!require(devtools)) install.packages("devtools")
 if(!require(dispRity)) install.packages("dispRity")
 if(!require(landvR)) install_github("TGuillerme/landvR")
-```
 
-### Load data from previous step
-Use .rda files for small patch data before sliding.
-```{r}
-load(file = "../Data/Results/01-sm-patch-data.rda")
+library(stringr)
+library(data.table)
+library(geomorph)
+source("../Functions/utilities.R")  # custom functions
+load(file = "../Data/Processed/01-data-for-appendix.rda")  # pre-gpagen() shape data from script 01, to be re-slid in this script
+load(file = "../Data/Processed/02-data-for-analyses.rda")  # main data set
 ```
 
 ## Run GPA treating all points as fixed landmarks
