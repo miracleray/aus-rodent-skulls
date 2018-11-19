@@ -1,0 +1,34 @@
+---
+title: "06-analyze-shape-with-phylogeny"
+author: "Ariel Marcy"
+date: "11/19/2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir = '../aus-rodent-skulls')
+```
+
+# Phylogenetic analyses
+Evolutionary studies must take into account the phylogenetic tree because related species do not behave the same as independent samples. 
+
+### Load packages, functions, and data
+```{r message = FALSE}
+library(TreeSearch)  # needed to load in Nexus files
+library(stringr)
+library(data.table)
+library(geomorph)
+source("../Functions/utilities.R")  # loads custom functions
+load(file = "../Data/Processed/03-sm-data-for-analyses.rda")
+load(file = "../Data/Processed/04-sm-data-w-traits.rda")
+```
+
+### Load in phylogenetic tree
+The most recent tree for Australian rodents is from Smissen & Rowe 2018. The authors provided us with the Nexus files for the Australo-Papuan Murinae and for the complete Pseudomys Division.
+```{r}
+raw_tree <- ape::read.nexus.data(filename) ### FIX FILENAME
+```
+
+## 
+

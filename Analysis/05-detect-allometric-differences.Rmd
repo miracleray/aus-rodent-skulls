@@ -16,12 +16,10 @@ Changing size is one of the most common ways that organisms can also change thei
 ### Load packages, functions, and data
 ```{r message = FALSE}
 install_github("TGuillerme/dispRity", ref = "release")
-
 library(dispRity)
 library(stringr)
 library(data.table)
 library(geomorph)
-
 source("../Functions/utilities.R")  # loads custom functions
 load(file = "../Data/Processed/03-sm-data-for-analyses.rda")
 load(file = "../Data/Processed/04-sm-data-w-traits.rda")
