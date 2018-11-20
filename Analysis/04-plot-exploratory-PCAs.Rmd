@@ -37,11 +37,18 @@ The function `PlotPCA()` adapts code quickly plots a PCA with specimens colored 
 
 The chunk below demonstrates how a plot can be exported as a .eps file. These file types can be opened in programs like Adobe Illustrator for minor aesthetic adjustments or be exported to a variety of other filetypes.
 ```{r}
+# Set color scheme for legend, taxa listed in order presented in phylogeny
+gen.color <- c("yellow", "darkgoldenrod4", "green", "light green", "cornflowerblue", "light blue", "blue", "dark blue", "red", "orange", "magenta", "grey", "black")  # same as col.gen but in a different order
+genus.name <- c("Mel", "Uro", "Mes", "Lep", "Leg", "Zyz", "Not", "Pse", "Hyd", "Xer", "Pog", "Mus", "Rat")
+
 # Plot PCA by genus and export as .eps into ../Data/Results folder
-setEPS()
-postscript("../Data/Results/PCA_genus.eps")
-PlotPCA(shape, 1, 2, col.gen)
-dev.off()
+### setEPS()
+### postscript("../Data/Results/PCA_genus.eps")
+
+PlotPCA(shape, 1, 2, col.gen, flip.axis1 = TRUE)
+legend(0.144, 0.1, legend = genus.name, col = gen.color, pch = 16, cex = 0.78)
+
+### dev.off()
 ```
 
 ## PCA plot by diet and guild
@@ -69,15 +76,15 @@ pch.gld <- PlotByGroup(info.traits, "Guild", pch.gld)
 
 Plot PC1 vs PC2 and add custom legends.
 ```{r}
-PlotPCA(shape, 1, 2, col.feed, pch.gld)
+PlotPCA(shape, 1, 2, col.feed, pch.gld, flip.axis1 = TRUE)
 
 # Legends
-legend(0.071, -0.012, legend = c("Aquatic", "Arboreal", "Terrest."), col = "black", border = NULL, pch = c(21, 24, 22))
-text(-0.0, -0.055, "Carnivore", col = "red")
-text(0.083, -0.005, "Frugivore", col = "darkorange")
-text(-0.015, 0.033, "Herbivore", col = "green")
-text(-0.07, -0.045, "Omnivore", col = "burlywood4")
-text(-0.085, 0.01, "Granivore", col = "gold2")
+legend(0.1, 0.093, legend = c("Aquatic", "Arboreal", "Terrest."), col = "black", border = NULL, pch = c(21, 24, 22))
+text(-0.01, 0.08, "Carnivore", col = "red")
+text(0.11, 0.02, "Frugivore", col = "darkorange")
+text(0.073, -0.045, "Herbivore", col = "green")
+text(-0.07, 0.06, "Omnivore", col = "burlywood4")
+text(-0.11, 0, "Granivore", col = "gold2")
 ```
 
 ## Look for morphospace partitioning by habitat
@@ -93,30 +100,38 @@ Finally, we'll combine these functions with a loop to plot PCAs with color by ta
 # Get PCA data as used above
 pca <- PlotPCA(shape, 1, 2, col.feed, pch.gld, return.PCA = TRUE)
 pc.scores <- subset(pca$pc.scores, select = 1:3)  # only 1st 3 PCs
+pc.scores[, "PC1"] <- -pc.scores[, "PC1"]  # flip PC1 so large species have large x-values
+
+# Assign colors to taxa
+col.gen <- c("red", "cornflowerblue", "light green", "dark blue", "yellow", "green", "grey", "blue", "magenta", "dark blue", "black", "darkgoldenrod4", "orange", "light blue")
+
+col.taxa <- PlotByGroup(info.traits, "Genus", col.gen)
 
 # Loop through all 7 regions to plot morphospace of species found in each
 region.names <- c("Savannah", "Arid Zone", "NE Wet Forest", "NE Dry Forest", "Pilbara", "South West", "South East")
 
 for (i in 1:7) {
-        # Subset info.traits and PC scores by region
+        # Subset info.traits, PC scores, and color key by region
         in.region <- FoundInRegion(info.traits, regions = i)
         info.region <- info.traits[in.region, ]
         pc.region <- as.data.frame(pc.scores[in.region, ])
+        col.taxa.region <- col.taxa[in.region]
         
-        # Colors by genus, points by unique species in a genus
-        col.gen.region <- PlotByGroup(info.region, "Genus", col.gen)
+        # Assign points by unique species in a genus
         pch.tax.legend <- PointOutDiffSpp(info.region)
         pch.tax.region <- PlotByGroup(info.region, "Taxa", pch.tax.legend)
         
-        # Plot with fancy (i.e. verbose) legend
+        # Plot with fancy (i.e. verbose) legend by:
         info.region$Legend <- paste(str_sub(info.region$Genus, 1, 3), str_sub(info.region$Species, 1, 3))  # Mus musculus -> "Mus mus"
+
+        # 1) Making list of unique binomial names
+        unique.taxa <- sort(unique(info.region$Legend))  # alphabetical order
+        legend.genus <- substr(unique.taxa, 1, 3)  # makes string of genera names with repeats when there are unique species in a genus
         
-        # Make color vector for legend points
+        # 2) Making color key for legend
         genera.in.region <- which(levels(info.traits$Genus) %in% sort(unique(info.region$Genus)))
-        col.gen.reg <- col.gen[genera.in.region]  # subset by genera in region
-        unique.taxa <- sort(unique(info.region$Legend))
-        legend.genus <- substr(unique.taxa, 1, 3)
-        names(col.gen.reg) <- unique(legend.genus)
+        col.gen.reg <- col.gen[genera.in.region]  # subset col.gen for region
+        names(col.gen.reg) <- unique(legend.genus)  # make dummy color key with names of unique genera
         col.gen.legend <- col.gen.reg[match(legend.genus, names(col.gen.reg))]
         
         # Write x and y labels with proportion of variance for PCx and PCy
@@ -126,20 +141,22 @@ for (i in 1:7) {
         PCy.per <- round(PCs[2, 2] * 100, digits = 1)
         PCy.lab <- paste("PC2 (", PCy.per, "%)", sep = "")
         
+        # Plot PCA with legend and labels
         PCA.plot <- plot(x = pc.region$PC1,
                          y = pc.region$PC2,
                          main = paste(region.names[i], "Region Morphospace" ),
                          xlab = PCx.lab,
                          ylab = PCy.lab,
-                         xlim = c(-0.10, 0.095),
-                         ylim = c(-0.04, 0.07),
-                         col = col.gen.region, 
+                         xlim = c(-0.11, 0.16),
+                         ylim = c(-0.05, 0.095),
+                         col = col.taxa.region, 
                          pch = pch.tax.region, 
-                         bg = col.gen.region,
+                         bg = col.taxa.region,
                          cex = 1.5,
                          cex.axis = 1.3, 
                          cex.lab = 1.3)
-        legend(0.075, 0.075, legend = unique.taxa, col = col.gen.legend, border = NULL, pch = pch.tax.legend, pt.bg = col.gen.legend, cex = 0.64)
+        
+        legend(0.13, 0.105, legend = unique.taxa, col = col.gen.legend, border = NULL, pch = pch.tax.legend, pt.bg = col.gen.legend, cex = 0.64)
 }
 ```
 

@@ -23,7 +23,6 @@ Here we test if the shape patterns produced by the two protocols are different i
 if(!require(devtools)) install.packages("devtools")
 if(!require(dispRity)) install.packages("dispRity")
 if(!require(landvR)) install_github("TGuillerme/landvR")
-
 library(data.table)
 library(geomorph)
 source("../Functions/utilities.R")  # custom functions
@@ -133,7 +132,7 @@ PCAs are very human-friendly way of visualizing shape variation in 2 dimensions.
 ```{r}
 big.pca <- plotTangentSpace(big.shape, groups = sp.col.gen, axis1 = 1, axis2 = 2, verbose = T)
 
-# Flip PC1 so it makes sense in terms of larger species having larger x-values
+# Flip PC1 so larger species have larger x-values
 big.pca$pc.scores[, "PC1"] <- -(big.pca$pc.scores[, "PC1"])
 
 # Get proportion of variance for PC1 and PC2 in format for plots
@@ -160,7 +159,7 @@ plot(x = big.pca$pc.scores[, 1],
 # Plot PCAs
 sm.pca <- plotTangentSpace(sm.shape, groups = sp.col.gen, axis1 = 1, axis2 = 2, verbose = T)
 
-# Flip PC1 so it makes sense in terms of larger species having larger x-values
+# Flip PC1 so larger species have larger x-values
 sm.pca$pc.scores[, "PC1"] <- -(sm.pca$pc.scores[, "PC1"])
 
 # Get proportion of variance for PC1 and PC2 in format for plots
