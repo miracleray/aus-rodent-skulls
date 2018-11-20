@@ -200,7 +200,7 @@ RepAbility <- function(coords, ids, n.Rep, print = TRUE, export = FALSE, filenam
 # PlotByGroup
 ##########################
 PlotByGroup <- function(metadata, column, color.key){
-        # Matches colors or other plotting attributes to each specimen according to a grouping factor.
+        # Matches colors or other plotting attributes to each specimen according to a grouping factor or a column number.
         #
         # Args:
         #   metadata: metadata table, often created with WriteMetadata().
@@ -210,8 +210,13 @@ PlotByGroup <- function(metadata, column, color.key){
         # Returns:
         #    A vector of colors the length of specimen number, with colors according to the group descriptor of each individual, ready for plot().
         
-        col.names <- unlist(dimnames(metadata)[[2]])
-        col.num <- which(col.names == column)
+        if (is.numeric(column)) {
+                col.num <- column
+        } else {
+                col.names <- unlist(dimnames(metadata)[[2]])
+                col.num <- which(col.names == column)
+        }
+        
         grp <- as.factor(metadata[, col.num])
         names(color.key) <- sort(unique(grp))
         grp.col <- color.key[match(grp, names(color.key))]
@@ -241,8 +246,8 @@ MatchSpecShape <- function(spec, info, shape){
 ##########################
 # PlotPCA
 ##########################
-PlotPCA <- function(shape, PCx, PCy, col.grp, pch.grp = 16, return.PCA = F) {
-        # Plots PCAs with specimens colored (and optionally given different points) according to groups, reports PC axis variation in %.
+PlotPCA <- function(shape, PCx, PCy, col.grp, pch.grp = 16, return.PCA = F, flip.axis1 = F, flip.axis2 = F) {
+        # Plots PCAs with specimens colored (and optionally given different points) according to groups, reports PC axis variation in %; optional axis flipping.
         # 
         # Args:
         #    shape: a 3D array of shape coordinates in (p x k x n) format
@@ -251,6 +256,8 @@ PlotPCA <- function(shape, PCx, PCy, col.grp, pch.grp = 16, return.PCA = F) {
         #    col.grp: a vector of colors ordered in the same way as specimens, usually made with PlotByGroup().
         #    pch.grp: an optional vector for point shapes, also usually made with PlotByGroup() function. Default is a filled circle.
         #    return.PCA: If TRUE, returns the PCA data (run with groups set to col.grp) without a fancy plot. Default is FALSE.
+        #    flip.axis1: If TRUE, reverses sign for all coordinates of PCx
+        #    flip.axis2: If TRUE, reverses sign for all coordinates of PCy
         #
         # Returns:
         #    If return.PCA is TRUE, returns the pca object from plotTangentSpace(). If FALSE, returns a plot coloring the PCA by groups specified by col.grp and optionally pch.grp. 
@@ -259,6 +266,15 @@ PlotPCA <- function(shape, PCx, PCy, col.grp, pch.grp = 16, return.PCA = F) {
         
         if (return.PCA == TRUE) {
                 return(pca)
+        }
+        
+        # Handle flipped axes, if there are any
+        if (flip.axis1 == TRUE) {
+                pca$pc.scores[, PCx] <- -(pca$pc.scores[, PCx])
+        }
+        
+        if (flip.axis2 == TRUE) {
+                pca$pc.scores[, PCy] <- -(pca$pc.scores[, PCy])
         }
         
         # Write x and y labels with proportion of variance for PCx and PCy
