@@ -15,7 +15,7 @@ Evolutionary studies must take into account the phylogenetic tree because relate
 
 ### Load packages, functions, and data
 ```{r message = FALSE}
-library(ape)  # needed to load in Nexus files
+library(ape)  # needed to load in .tre phylogeny files
 library(stringr)
 library(data.table)
 library(geomorph)
@@ -25,10 +25,10 @@ load(file = "../Data/Processed/04-sm-data-w-traits.rda")
 ```
 
 ### Load in phylogenetic tree
-The most recent tree for Australian rodents is from Smissen & Rowe 2018. The authors provided us with the Nexus files for the Australo-Papuan Murinae and for the complete Pseudomys Division.
+The most recent tree for Australian rodents is from Smissen & Rowe 2018, Figure 2. The tree is a fossil calibrated ultrametric tree from BEAST2 for Hydromini, which includes all the Australo-Papuan old endemics in Murinae.
 ```{r}
-aus.rodents <- "../Data/Raw/matrix.nex" ### FIX FILENAME
-raw.tree <- read.nexus(aus.rodents) 
+aus.rodents <- "../Data/Processed/Smissen-Rowe-2018-concat.tre"  # 
+raw.tree <- read.tree(aus.rodents)
 ```
 
 ## 

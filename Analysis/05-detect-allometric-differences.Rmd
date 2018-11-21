@@ -31,6 +31,7 @@ Centroid size is a proxy for body size. Usually in GMM studies, the centroid siz
 Here we test for a significant correlation using Pearson's R and plot centroid size versus PC1.
 ```{r}
 pca <- plotTangentSpace(shape, axis1 = 1, axis2 = 2, verbose = T)
+pca$pc.scores[, 1] <- -pca$pc.scores[, 1]  # flip PC1 so larger spp have larger x-values
 
 # Find Pearson's r for correlation with PC1
 cor <- cor.test(info$Csize, pca$pc.scores[, 1], method = "pearson")
@@ -43,14 +44,14 @@ genus.name <- c("Mel", "Uro", "Mes", "Lep", "Leg", "Zyz", "Not", "Pse", "Hyd", "
 # Plot centroid size versus PC1 to see correlation
 plot(x = info$Csize, 
      y = pca$pc.scores[, 1], 
-     xlim = c(120, 440), 
-     ylim = c(-0.13, 0.13), 
+     xlim = c(110, 440), 
+     ylim = c(-0.11, 0.14), 
      col = col.gen, 
      pch = 16, 
      xlab = "Centroid size", 
      ylab = "PC1 score", 
      main = "PC1 vs Centroid Size")
-legend(413, 0.15, legend = genus.name, col = gen.color, pch = 16, cex = 0.78)
+legend(413, 0.16, legend = genus.name, col = gen.color, pch = 16, cex = 0.78)
 text(300, 0, paste("r =", cor.assoc), col = "dark grey")
 ```
 
