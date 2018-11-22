@@ -1,5 +1,5 @@
 ---
-title: "06-analyze-shape-with-phylogeny"
+title: "06-prep-data-for-phylogenetics"
 author: "Ariel Marcy"
 date: "11/19/2018"
 output: html_document
@@ -16,6 +16,7 @@ Evolutionary studies must take into account the phylogenetic tree because relate
 ### Load packages, functions, and data
 ```{r message = FALSE}
 library(ape)  # needed to load in .tre phylogeny files
+library(magrittr)  # needed to prune tree
 library(stringr)
 library(data.table)
 library(geomorph)
@@ -24,12 +25,136 @@ load(file = "../Data/Processed/03-sm-data-for-analyses.rda")
 load(file = "../Data/Processed/04-sm-data-w-traits.rda")
 ```
 
+## Prepare the tree data for phylogenetic analyses
+The commands in `geomorph` require the tree and datasets to have exactly the same set of species.
+
 ### Load in phylogenetic tree
 The most recent tree for Australian rodents is from Smissen & Rowe 2018, Figure 2. The tree is a fossil calibrated ultrametric tree from BEAST2 for Hydromini, which includes all the Australo-Papuan old endemics in Murinae.
 ```{r}
 aus.rodents <- "../Data/Processed/Smissen-Rowe-2018-concat.tre"  # 
 raw.tree <- read.tree(aus.rodents)
+tip.labels <- as.vector(raw.tree$tip.label)  # get species names from tree
 ```
 
-## 
+### Rename nodes??
+Since the 2018 Smissen & Rowe tree focused primarily on New Guinae species, it does not have all of the Australian species in our shape dataset. However, it does include sister species with the same relative branch length to other genera in the study. Therefore, we decided to rename some of the nodes with Australian species. 
 
+**Renamed nodes:**
+_Pogonomys macruourus_ (NG) to _Pogonomys mollipilosus_ (Aus)
+_Melomys bannisteri_ (NG) to _Melomys burtoni_ (Aus)
+
+```{r}
+P.mac <- which(str_detect(tip.labels, "Pogonomys_macrourus"))
+tip.labels[P.mac] <- "Pogonomys_mollipilosus"
+
+M.ban <- which(str_detect(tip.labels, "Melomys_bannisteri"))
+tip.labels[P.mac] <- "Melomys_burtoni"
+
+#### TO DO: Not currently working for P mol. correct spelling in in_ex_traits (mollilpilosis has an extra l); fix also Hydromys<space>_chyrsogaster
+```
+
+### Extract only Genus and Species names from the tree
+The tree file has uneven amounts of information for each entry, some entries have catalog numbers and others do not. Therefore we needed a `for` loop to grab the first two elements from a list, which always corresponded to Genus and Species.
+
+We reassign only Genus and Species names (in form Genus_species) to the tree so that going forward it is easier to compare to the shape data. 
+```{r}
+label.list <- strsplit(tip.labels, "_")  # separate information into list
+spp.in.tree <- data.frame(Genus = NA, Species = NA)  # initiate data frame
+
+# For loop finds Genus & Species for each subsequent tip name
+for (i in 1:length(label.list)) {
+        entry <- unlist(label.list[i])
+        spp.in.tree <- rbind(spp.in.tree, c(entry[1], entry[2]))
+}
+spp.in.tree <- spp.in.tree[2:dim(spp.in.tree)[1], ]  # remove 1st row with NAs; needed for rbind() to work on the first case
+rownames(spp.in.tree) <- NULL  # reset index values
+
+# Re-assign simpler names to tip names of tree file
+spp.in.tree$FullName <- paste(spp.in.tree$Genus, spp.in.tree$Species, sep = "_")
+raw.tree$tip.label <- spp.in.tree$FullName
+```
+
+### Prune and re-order the shape dataset in 4 steps
+1) Determine which species are found in the tree.
+```{r}
+# Make FullName column for shape data
+info.traits$FullName <- paste(info.traits$Genus.y, info.traits$Species.y, sep = "_")
+spp.in.shape <- unique(info.traits$FullName)
+
+# Test which are present in the tree, and if present return index of spp in tree
+tree.index <- vector()
+for (spp in spp.in.shape) {
+       tree.index <- c(tree.index, (match(spp, spp.in.tree$FullName)))
+}
+```
+
+Re-order the metadata and shape datasets to match the order of species found in the tree. We created a function to do most of the work (see utilities.R).
+```{r}
+MatchTips(raw.tree, spp.in.shape)
+        # Creates a vector of indices to match other data to the tree with no duplicated/replicated entries of the tree. Also returns a list of specimens not found in the tree and how many times replicated specimens were replicated.  
+        #
+        # Args:
+        #    tree: a phylogenetic tree, like that created by rtree()
+        #    vector: a vector of names from another dataset, such as shape data.
+        #    verbose: if TRUE, prints progress as function creates 3 returns.
+        #
+        # Returns:
+        #    A list with 3 items: a vector with no replicated specimens of indices to match other data to the tree, specimens missing from the tree, and a list of replicated specimens.
+
+ordered.shape.tree <- shape.tree[ , , MatchTips(tree, dimnames(shape.tree)[[3]])$matched]
+
+```
+
+
+### Prune the tree to match the shape dataset
+
+
+## Calculate mean shape for each species
+
+
+
+
+
+
+### Basement
+
+Testing trees
+```{r}
+test.tree <- rtree(6, tip.label = letters[1:6])
+test.shape <- c(letters[1:6])
+
+MatchTips(test.tree, test.shape)
+```
+
+
+2) Put the list of shape specimens in the same order as the tree.
+```{r}
+# Make a list of shape specimens in the same order as the tree
+is.in.tree <- !is.na(tree.index)
+spp.in.tree <- spp.in.shape[is.in.tree]  # remove species not in tree
+in.tree.index <- tree.index[is.in.tree]  # remove 0's of species not in tree
+spp.in.tree.order <- spp.in.tree[order(in.tree.index)]  # spp ordered like tree
+```
+
+3) Subset the metadata and shape datasets by the specimens in the tree.
+```{r}
+# Find index numbers of species in tree, return NA if not present
+tree.index.meta <- vector()
+for (i in 1:dim(info.traits)[1]) {
+       tree.index.meta <- c(tree.index.meta, (match(info.traits$FullName[i], spp.in.tree)))
+}
+is.in.tree.meta <- !is.na(tree.index.meta)  # converts index numbers to logical
+
+# Subset the datasets
+info.tree <- info.traits[is.in.tree.meta, ]  # metadata
+shape.tree <- shape[, , is.in.tree.meta]  # shape data
+
+### 4) 
+# Match the index numbers to species name with a new column
+tree.key <- as.data.frame(cbind(in.tree.index, spp.in.tree))
+colnames(tree.key) <- c("Index", "FullName")
+
+# Merge new key with metadata and sort the way the dimnames of shape will order the specimens: FullName (which Index covers) and then CatNum
+info.tree <- merge(info.tree, tree.key, by = "FullName")
+info.tree <- info.tree[order(info.tree$Index, info.tree$CatNum), ]  # re-ordered
+```

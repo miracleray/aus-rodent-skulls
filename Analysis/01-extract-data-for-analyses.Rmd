@@ -92,6 +92,10 @@ In this dataset, the filenames look like: Pse_aus_C12345_small_non for genus, sp
 ```{r}
 cols = c("Genus", "Species","CatNum","Patch", "Rep")
 sp.info <- WriteMetadata(A, cols)
+
+# Add special columns (requires 'Genus' 'Species' 'CatNum' & 'Rep')
+sp.info$Taxa <- paste(str_sub(sp.info$Genus, 1, 1), str_sub(sp.info$Species, 1, 3), sep = "_")  # turns Mus musculus into M_mus
+sp.info$All <- with(sp.info, interaction(Genus, Species, CatNum, Rep, sep = "_"))  # required to run geomorph's bilat.symmetry()
 ```
 
 ## Create shape matrices for each patch protocol

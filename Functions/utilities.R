@@ -24,10 +24,6 @@ WriteMetadata <- function(threeD.array, cols) {
         colnames(my.classifiers) <- cols
         sp.info <- as.data.frame(my.classifiers)
         
-        # Add special columns (requires 'Genus' 'Species' 'CatNum' & 'Rep')
-        sp.info$Taxa <- paste(str_sub(sp.info$Genus, 1, 1), str_sub(sp.info$Species, 1, 3), sep = "_")  # turns Mus musculus into M_mus
-        sp.info$All <- with(sp.info, interaction(Genus, Species, CatNum, Rep, sep = "_"))  # required to run geomorph's bilat.symmetry()
-        
         return(sp.info)
 }
 
@@ -394,4 +390,60 @@ FindNatives <- function(spec.info, column, invasives) {
         }
         is.native <- !is.invasive
         return(is.native)
+}
+
+##########################
+# MatchTips
+##########################
+
+MatchTips <- function(tree, vector, verbose = TRUE) {
+        # Creates a vector of indices to match other data to the tree with no duplicated/replicated entries of the tree. Also returns a list of specimens not found in the tree and how many times replicated specimens were replicated.  
+        #
+        # Args:
+        #    tree: a phylogenetic tree, like that created by rtree()
+        #    vector: a vector of names from another dataset, such as shape data.
+        #    verbose: if TRUE, prints progress as function creates 3 returns.
+        #
+        # Returns:
+        #    A list with 3 items: a vector with no replicated specimens of indices to match other data to the tree, specimens missing from the tree, and a list of replicated specimens.
+        
+        matched <- match(vector, tree$tip.label)
+        
+        # Test if NAs exist
+        if (any(is.na(matched))){
+                vector.nas <- which(is.na(matched))
+                
+                # Remove NA from matched list
+                matched <- matched[-vector.nas]
+                
+                if (verbose) {
+                        cat(paste0("These are not in the tree: \n\t"))
+                        cat(paste0(vector[vector.nas], "\n\t"))
+                        cat("\n")
+                }
+        } else {
+                vector.nas <- NULL
+        }
+        
+        # Check for cases of more than 1
+        if (length(unique(matched)) != length(matched)) {
+                count <- table(tree$tip.label[matched])
+                reps <- which(count != 1)
+                reps.num <- count[reps]
+                reps.names <- names(reps.num)
+                
+                matched <- unique(matched)
+                
+                if (verbose) {
+                        cat(paste0("Here are the replicated tips: \n"))
+                        for (i in 1:length(reps)) {
+                                cat(paste0(reps.names[i], "(", reps.num[i], ") " ))
+                        }
+                        cat("\n")
+                }
+        } else {
+                reps.num <- NULL
+        }
+        
+        return(list("matched" = matched, "NAs" = vector.nas, "reps" = reps.num))
 }

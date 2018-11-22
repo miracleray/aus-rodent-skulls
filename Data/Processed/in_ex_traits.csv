@@ -1,5 +1,5 @@
 ﻿Genus,Species,Clade,Feeding,Guild,Savannah,AridZone,NEWetForest,NEDryForest,Pilbara,SW,SE
-Hydromys ,chrysogaster,Hydromini,Carnivorous,Aquatic,1,1,1,1,0,1,1
+Hydromys,chrysogaster,Hydromini,Carnivorous,Aquatic,1,1,1,1,0,1,1
 Leggadina,forresti,Pseudomini,Omnivorous,Terrestrial,0.5,0,1,0,0,0,0
 Leporillus,conditor,Conilurini,Herbivorus,Terrestrial,0,1,0,0,0,1,0.5
 Mastacomys,fuscus,Pseudomini,Herbivorus,Terrestrial,0,0,0,0,0,0,1
@@ -12,7 +12,7 @@ Notomys,alexis,Pseudomini,Omnivorous,Terrestrial,0,1,0,0,0.5,0.5,0
 Notomys,cervinus,Pseudomini,Omnivorous,Terrestrial,0,1,0,0,0,0,0
 Notomys,fuscus,Pseudomini,Omnivorous,Terrestrial,0,1,0,0,0,0,0
 Notomys,mitchellii,Pseudomini,Omnivorous,Terrestrial,0,1,0,0,0,1,1
-Pogonomys,mollilpilosis,Pogonomini,Frugivorous,Arboreal,0,0,1,0,0,0,0
+Pogonomys,mollipilosis,Pogonomini,Frugivorous,Arboreal,0,0,1,0,0,0,0
 Pseudomys,australis,Pseudomini,Granivorous,Terrestrial,0,1,0,0.5,0,0,0.5
 Pseudomys,delicatulus,Pseudomini,Granivorous,Terrestrial,1,0.5,0,1,1,0,0.5
 Pseudomys,desertor,Pseudomini,Herbivorus,Terrestrial,0.5,1,0,1,0.5,0.5,0.5
@@ -34,3 +34,12 @@ Rattus,villosissimus,Rattus,Omnivorous,Terrestrial,1,0.5,0,0.5,0,0,0
 Uromys,caudimaculatus,Uromyini,Frugivorous,Arboreal,0,0,1,1,0,0,0
 Xeromys,myoides,Hydromini,Carnivorous,Aquatic,1,0,0,1,0,0,0
 Zyzomys,argurus,Pseudomini,Omnivorous,Terrestrial,1,1,0.5,1,1,0,0
+Conilurus,penicillatus,Conilurini,Granivorous,Arboreal,,,,,,,
+Leggadina,lakedownensis,Pseudomini,Omnivorous,Terrestrial,,,,,,,
+Leporillus,apicalis,Conilurini,Herbivorus,Terrestrial,,,,,,,
+Mesembriomys,macrurus,Conilurini,Frugivorous,Arboreal,,,,,,,
+Notomys,longicaudatus,Pseudomini,Omnivorous,Terrestrial,,,,,,,
+Pseudomys,apodemoides,Pseudomini,Omnivorous,Terrestrial,,,,,,,
+Pseudomys,chapmani,Pseudomini,Omnivorous,Terrestrial,,,,,,,
+Pseudomys,fieldi,Pseudomini,Omnivorous,Terrestrial,,,,,,,
+Zyzomys,pedunculatus,Pseudomini,Granivorous,Terrestrial,,,,,,,
