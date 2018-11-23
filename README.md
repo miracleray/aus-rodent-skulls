@@ -31,12 +31,12 @@ If you use these data, please cite the original authors:
 
 If you use these data, please cite the original authors:
 > Smissen PJ & Rowe KC. 2018. Repeated biome transitions in the evolution of Australian Rodents. Molecular Phylogenetics and Evolution. 128:182–191. doi: 10.1016/j.ympev.2018.07.015.
-
-### Custom functions in the utility file 
-The analyses call custom functions that are all defined in the ..Data/Functions/utilities.R file.
     
 ## Analyses
 The analysis workflow is broken down into smaller scripts explained below. Each script loads data created by the script before, so this workflow requires you to run the scripts in order. The intermediate data -- stored as .rda files in the /Data/Processed folder -- are too large to upload to Github. 
+
+### Custom functions in the utility file 
+The analyses call custom functions that are all defined in the ..Data/Functions/utilities.R file.
 
 All of the scripts below are in RMarkdown format (.Rmd), which can be opened in RStudio. There, you can edit and run code chunks as normal, or you can click the Knit button to create HTML versions with both code and output.
 
@@ -44,7 +44,7 @@ All of the scripts below are in RMarkdown format (.Rmd), which can be opened in 
 * **02-calculate-user-error.Rmd** Allows users to view outliers and find major landmarking errors. Takes out replicated specimens from the shape data, finds their duplicates, and calculates user error based on repeatability for both patch datasets. 
 * **03-compare-patch-protocols.Rmd** Plots PCAs colored by genus and runs shape ~ genus * centroid size ANOVAs for both patch protocols. Visualizes landmark variation differences with Dr Thomas Guillerme's new package, `landvR`, in a color-coded heatmap.   
 * **04-plot-exploratory-PCAs.Rmd** Allows users to quickly plot PCAs with point colors and shapes according to taxa or trait information provided in the metadata table. Also loops through the 7 Australian regions to plot the PCA morphospace by region.
-* **05-detect-allometric-differences.Rmd** Tests correlation of PC1 and PC2 with centroid size. Uses _geomorph_'s `procD.allometry()` to test for significant differences in allometric slopes and intercepts by genus and by clade. Plots allometric relationships using RegScore.
+* **05-detect-allometric-differences.Rmd** Tests correlation of PC1 and PC2 with centroid size. Uses `geomorph`'s `procD.allometry()` to test for significant differences in allometric slopes and intercepts by genus and by clade. Plots allometric relationships using RegScore.
 * **06-prep-data-for-phylogenetics.Rmd** Organizes the tree, shape data, and metadata in preparation for phylogenetic analyses of shape. Calculates the mean specimen shape for all species included in the 2018 Smissen & Rowe tree. 
 
 ### Supplementary Analyses
