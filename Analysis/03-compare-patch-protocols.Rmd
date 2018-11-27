@@ -124,11 +124,16 @@ Here, we'll use this function to look at the morphospace colored by genus.
 # Colors by genus: Hyd Leg Lep Mas Mel Mes Mus Not Pog Pse Rat Uro Xer Zyz
 col.gen <- c("red", "cornflowerblue", "light green", "dark blue", "yellow", "green", "grey", "blue", "magenta", "dark blue", "black", "darkgoldenrod4", "orange", "light blue")
 
+# Colors by specimen, ordered in same way as metadata
 sp.col.gen <- PlotByGroup(big.info, "Genus", col.gen)  # is the same for big and small protocols, tested with all.equal()
+
+# Set color scheme for plot legends, taxa listed in order presented in phylogeny
+col.phylo <- c("yellow", "darkgoldenrod4", "green", "light green", "cornflowerblue", "light blue", "blue", "dark blue", "red", "orange", "magenta", "grey", "black")  # same as col.gen but in a different order
+gen.name.phylo <- c("Mel", "Uro", "Mes", "Lep", "Leg", "Zyz", "Not", "Pse", "Hyd", "Xer", "Pog", "Mus", "Rat")  # order of genera in phylogeny
 ```
 
 ### PCA plot of big patch protocol
-PCAs are very human-friendly way of visualizing shape variation in 2 dimensions. Usually, the proportion of variance for each PC axis is reported in percent. 
+PCAs are very human-friendly way of visualizing shape variation in 2 dimensions. Usually, the proportion of variance for each PC axis is reported in percent.
 ```{r}
 big.pca <- plotTangentSpace(big.shape, groups = sp.col.gen, axis1 = 1, axis2 = 2, verbose = T)
 
@@ -141,10 +146,10 @@ big.PC1 <- round(big.PCs[2, 1] * 100, digits = 1)  # % with 1 decimal
 big.PC2 <- round(big.PCs[2, 2] * 100, digits = 1)
 
 # Pretty plot
-plot(x = big.pca$pc.scores[, 1], 
+plot(x = big.pca$pc.scores[, 1],
      y = big.pca$pc.scores[, 2], 
      xlab = paste("PC1 (", big.PC1, "%)", sep = ""), 
-     ylab = paste("PC2 (", big.PC2, "%)", sep = ""), 
+     ylab = paste("PC2 (", big.PC2, "%)", sep = ""),
      asp = TRUE, 
      col = sp.col.gen, 
      bg = sp.col.gen,
@@ -152,6 +157,7 @@ plot(x = big.pca$pc.scores[, 1],
      cex = 1.5, 
      cex.axis = 1.3, 
      cex.lab = 1.3)
+legend(0.142, 0.095, legend = gen.name.phylo, col = col.phylo, pch = 16, cex = 0.78)
 ```
 
 ### PCA plot of small patch protocol
@@ -168,10 +174,10 @@ sm.PC1 <- round(sm.PCs[2, 1] * 100, digits = 1)
 sm.PC2 <- round(sm.PCs[2, 2] * 100, digits = 1)
 
 # Pretty plot
-plot(x = sm.pca$pc.scores[, 1], 
+plot(x = sm.pca$pc.scores[, 1],
      y = sm.pca$pc.scores[, 2], 
      xlab = paste("PC1 (", sm.PC1, "%)", sep = ""), 
-     ylab = paste("PC2 (", sm.PC2, "%)", sep = ""), 
+     ylab = paste("PC2 (", sm.PC2, "%)", sep = ""),
      asp = T,
      col = sp.col.gen, 
      bg = sp.col.gen,
@@ -179,6 +185,7 @@ plot(x = sm.pca$pc.scores[, 1],
      cex = 1.5, 
      cex.axis = 1.3, 
      cex.lab = 1.3)
+legend(0.143, 0.101, legend = gen.name.phylo, col = col.phylo, pch = 16, cex = 0.78)
 ```
 
 ## Compare performance of patch protocols in ANOVA by genus and centroid size
@@ -208,7 +215,6 @@ shape <- sm.shape
 info <- sm.info
 PCA <- sm.pca
 PCs <- sm.PCs
-col.gen <- sp.col.gen
 
-save(shape, info, PCA, PCs, col.gen, file = "../Data/Processed/03-sm-data-for-analyses.rda")
+save(shape, info, PCA, PCs, col.gen, sp.col.gen, col.phylo, gen.name.phylo, file = "../Data/Processed/03-sm-PCA-with-color.rda")
 ```

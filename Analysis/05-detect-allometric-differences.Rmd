@@ -21,8 +21,8 @@ library(stringr)
 library(data.table)
 library(geomorph)
 source("../Functions/utilities.R")  # loads custom functions
-load(file = "../Data/Processed/03-sm-data-for-analyses.rda")
-load(file = "../Data/Processed/04-sm-data-w-traits.rda")
+load(file = "../Data/Processed/03-sm-PCA-with-color.rda")
+load(file = "../Data/Processed/04-sm-data-with-traits.rda")
 ```
 
 ## Correlation of allometry to PC1

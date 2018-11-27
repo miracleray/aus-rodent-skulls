@@ -242,8 +242,55 @@ MatchSpecShape <- function(spec, info, shape){
 ##########################
 # PlotPCA
 ##########################
-PlotPCA <- function(shape, PCx, PCy, col.grp, pch.grp = 16, return.PCA = F, flip.axis1 = F, flip.axis2 = F) {
+PlotPCA <- function(pca, PCx, PCy, col.grp, pch.grp = 16, flip.axis1 = F, flip.axis2 = F) {
         # Plots PCAs with specimens colored (and optionally given different points) according to groups, reports PC axis variation in %; optional axis flipping.
+        # 
+        # Args:
+        #    PCA: an object of class plotTangentSpace
+        #    PCx: the PC intended for the x-axis.
+        #    PCy: the PC intended for the y-axis, usually x > y. 
+        #    col.grp: a vector of colors ordered in the same way as specimens, usually made with PlotByGroup().
+        #    pch.grp: an optional vector for point shapes, also usually made with PlotByGroup() function. Default is a filled circle.
+        #    flip.axis1: If TRUE, reverses sign for all coordinates of PCx
+        #    flip.axis2: If TRUE, reverses sign for all coordinates of PCy
+        #
+        # Returns:
+        #    If return.PCA is TRUE, returns the pca object from plotTangentSpace(). If FALSE, returns a plot coloring the PCA by groups specified by col.grp and optionally pch.grp. 
+        
+        # Handle flipped axes, if there are any
+        if (flip.axis1 == TRUE) {
+                pca$pc.scores[, PCx] <- -(pca$pc.scores[, PCx])
+        }
+        
+        if (flip.axis2 == TRUE) {
+                pca$pc.scores[, PCy] <- -(pca$pc.scores[, PCy])
+        }
+        
+        # Write x and y labels with proportion of variance for PCx and PCy
+        PCs <- pca$pc.summary$importance
+        PCx.per <- round(PCs[2, PCx] * 100, digits = 1)  # % with 1 decimal
+        PCx.lab <- paste("PC", PCx, " (", PCx.per, "%)", sep = "")
+        PCy.per <- round(PCs[2, PCy] * 100, digits = 1)
+        PCy.lab <- paste("PC", PCy, " (", PCy.per, "%)", sep = "")
+        
+        PCA.plot <- plot(x = pca$pc.scores[, PCx],
+                         y = pca$pc.scores[, PCy], 
+                         xlab = PCx.lab, 
+                         ylab = PCy.lab,
+                         asp = TRUE,
+                         col = col.grp, 
+                         pch = pch.grp, 
+                         bg = col.grp,
+                         cex = 1.5,
+                         cex.axis = 1.3, 
+                         cex.lab = 1.3)
+}
+
+##########################
+# DoPlotPCA
+##########################
+DoPlotPCA <- function(shape, PCx, PCy, col.grp, pch.grp = 16, return.PCA = F, flip.axis1 = F, flip.axis2 = F) {
+        # Runs and plots PCAs with specimens colored (and optionally given different points) according to groups, reports PC axis variation in %; optional axis flipping.
         # 
         # Args:
         #    shape: a 3D array of shape coordinates in (p x k x n) format
