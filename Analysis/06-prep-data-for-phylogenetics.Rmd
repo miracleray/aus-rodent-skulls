@@ -18,18 +18,15 @@ Many of these steps are based on Dr Meriam Zelditch et al.'s A Practical Compani
 
 ### Load packages, functions, and data
 ```{r message = FALSE}
-library(devtools)  # needed only to install landvR from Github the 1st time
-install_github("TGuillerme/landvR", ref = "release") 
+library(stringr)  # standard packages from here on
+library(data.table)
+library(geomorph)
+library(abind)  # needed to bind 2D arrays together into 3D arrays
 library(ape)  # needed to work with phylogenies from here on
 library(geiger)
 library(nlme)
 library(caper)
 library(car)
-library(stringr)  # standard packages from here on
-library(data.table)
-library(geomorph)
-library(devtools) 
-library(landvR)  # has select.procrustes() function
 source("../Functions/utilities.R")  # loads custom functions
 load(file = "../Data/Processed/03-sm-PCA-with-color.rda")
 load(file = "../Data/Processed/04-sm-data-with-traits.rda")
@@ -44,18 +41,20 @@ dimnames(shape.phylo)[[3]] <- as.list(paste(info.traits$Genus.y, info.traits$Spe
 
 ## Calculate mean shape for each species
 This step has to be done before working with the tree. To calculate the mean shape for each species, we'll use a function from `geomorph` called `m.shape()`. To get the means, we'll subset for each unique species.
+
+The mean shape function, `mshape()` gives a 2D array as an output. Therefore, the `for` loop below stores mean shapes in a 2D array format recognized by `geomorph`: (n x [p x k]), where n is number of specimens, p is number of landmark points, and k is number of dimensions. We finish by converting to a 3D array with format (p x k x n). A 3D array is required by most `geomorph` functions. 
 ```{r}
 info.traits$FullName <- paste(info.traits$Genus.y, info.traits$Species.y, sep = "_")  # give names to metadata in the same format as the tree "Genus_species"
 
 # For loop to subset shape data by species and calculate mean shape
-# Stores mean shapes in 2D array recognized by geomorph (n x [p x k])
-mean.shapes <- NULL  # initiate blank data frame
+mean.shapes.2D <- NULL  # initiate blank data frame
 for (i in 1:length(full.names)) {
         is.taxa <- which(info.traits$FullName == full.names[i])
-        shape.for.mean <- shape[, , is.taxa]
-        mean.of.taxa <- mshape(shape.for.mean)
-        mean.shapes <- cbind(mean.shapes, mean.of.taxa)
+        shape.for.mean.2D <- shape.phylo[, , is.taxa]
+        mean.shapes.2D <- rbind(mean.shapes.2D, mshape(shape.for.mean))  # mshape() finds mean specimen; rbind() is critical, output cols must = 3
 }
+mean.shapes <- arrayspecs(mean.shapes.2D, 325, 3)  # convert to 3D array
+dimnames(mean.shapes)[[3]] <- full.names  # names match tree names
 ```
 
 ## Prepare the tree data for phylogenetic analyses
