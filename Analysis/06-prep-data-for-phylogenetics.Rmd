@@ -18,9 +18,9 @@ Many of these steps are based on Dr Meriam Zelditch et al.'s A Practical Compani
 
 ### Load packages, functions, and data
 ```{r message = FALSE}
+library(devtools)  # needed only to install landvR from Github the 1st time
 install_github("TGuillerme/landvR", ref = "release") 
-
-library(ape)  # needed to work with phylogenies
+library(ape)  # needed to work with phylogenies from here on
 library(geiger)
 library(nlme)
 library(caper)
@@ -31,36 +31,32 @@ library(geomorph)
 library(devtools) 
 library(landvR)  # has select.procrustes() function
 source("../Functions/utilities.R")  # loads custom functions
-load(file = "../Data/Processed/03-sm-data-for-analyses.rda")
-load(file = "../Data/Processed/04-sm-data-w-traits.rda")
+load(file = "../Data/Processed/03-sm-PCA-with-color.rda")
+load(file = "../Data/Processed/04-sm-data-with-traits.rda")
 ```
 
 ### Rename dimnames of shape array to match phylogeny
-First, we'll rename the dimnames for the shape dataset so that it's only "Genus_Species". We can still reference the CatNum in the metadata.
+First, we'll rename the dimnames for the shape dataset so that it's only "Genus_Species". This is so we can re-order the shape data to match the tree later on. (We can still reference the CatNum in the metadata.)
 ```{r}
 shape.phylo <- shape  # initiate shape optimized for phylogenetics
 dimnames(shape.phylo)[[3]] <- as.list(paste(info.traits$Genus.y, info.traits$Species.y, sep = "_"))
 ```
 
 ## Calculate mean shape for each species
-This step has to be done before working with the tree. To calculate the mean shape for each species, we'll use a function from the new package, `landvR`. The results are the same as `geomorph`'s `m.shape()` applied to the shape data, subsetted for each genera (evaluated as the same using all.equal() - Dr Thomas Guillerme, `landvR` author).
+This step has to be done before working with the tree. To calculate the mean shape for each species, we'll use a function from `geomorph` called `m.shape()`. To get the means, we'll subset for each unique species.
 ```{r}
-# Define genera with for loop using which
-genus.names <- sort(unique(info.traits$Genus))
-genus <- NULL
-for (i in 1:length(genus.names)) {
-        is.genus <- which(info.traits$Genus == genus.names[i])
-        genus.col <- c(is.genus, rep(NA, (10 - length(is.genus))))
-        genus <- cbind(genus, genus.col)
+info.traits$FullName <- paste(info.traits$Genus.y, info.traits$Species.y, sep = "_")  # give names to metadata in the same format as the tree "Genus_species"
+
+# For loop to subset shape data by species and calculate mean shape
+# Stores mean shapes in 2D array recognized by geomorph (n x [p x k])
+mean.shapes <- NULL  # initiate blank data frame
+for (i in 1:length(full.names)) {
+        is.taxa <- which(info.traits$FullName == full.names[i])
+        shape.for.mean <- shape[, , is.taxa]
+        mean.of.taxa <- mshape(shape.for.mean)
+        mean.shapes <- cbind(mean.shapes, mean.of.taxa)
 }
-colnames(genus) <- genus.names
-
-Hyd <- which(info.traits$Genus == "Hyd")
-Leg <- which(info.traits$Genus == "Leg")
-
-mean.gen.shape <- select.procrustes(shape, selector = mean, factors = genera)
 ```
-
 
 ## Prepare the tree data for phylogenetic analyses
 The commands in `geomorph` require the tree and datasets to have exactly the same set of species.
@@ -109,13 +105,14 @@ nodelabels(cex = 0.1)
 axisPhylo()
 ```
 
-### Prune the tree and shape dataset
-Now that the names in our info.traits metadata can be compared to the Smissen & Rowe tree, we can prune the tree and shape datasets to have all the same species.
+### Prune the shape dataset
+Now that the names in the Smissen & Rowe tree can be compared to our info.traits metadata, we can shape dataset to have all the same species.
 
-First, Re-order the metadata and shape datasets to match the order of species found in the tree. We created a function to do most of the work (see utilities.R).
+First, Re-order the metadata and shape datasets to match the order of species found in the tree. We created a function, `MatchedTips()` to do most of the work (see utilities.R).
 ```{r}
-info.traits$FullName <- paste(info.traits$Genus.y, info.traits$Species.y, sep = "_")  # give names to metadata in the same format as the tree "Genus_species"
 
+
+# prune species not in tree
 
 
 # MatchedTips()$matched is a vector of indices matching the shape data to the tree with no duplicated/replicated entries of the tree. See more in utlities.R.
@@ -123,7 +120,6 @@ MatchTips(renamed.tree, unique(info.traits$FullName))
 
 info.tree <- info.traits[MatchTips(renamed.tree, info.traits$FullName)$matched, ]
 shape.tree <- shape[ , , MatchTips(renamed.tree, dimnames(shape)[[3]])$matched]
-
 ```
 
 
@@ -149,7 +145,37 @@ drop.tree
 
 
 
-### Basement
+# Basement
+
+
+## Calculate mean shape for each species with `select.procrustes()`
+This step has to be done before working with the tree. To calculate the mean shape for each species, we'll use a function from the new package, `landvR`. The results are the same as `geomorph`'s `m.shape()` applied to the shape data, subsetted for each genera (evaluated as the same using all.equal() -Dr Thomas Guillerme, `landvR` author).
+```{r}
+# Define genera in data frame with for loop using which
+genus.names <- sort(unique(info.traits$Genus))
+genus <- NULL  # initiate blank data frame
+for (i in 1:length(genus.names)) {
+        is.genus <- which(info.traits$Genus == genus.names[i])
+        genus.col <- c(is.genus, rep(NA, (78 - length(is.genus))))
+        genus <- cbind(genus, genus.col)
+}
+colnames(genus) <- genus.names
+genus2 <- as.data.frame(genus)  # required for subsetting with $ in next step
+
+# Calculate mean shape
+genus.groups = list("Hyd" = na.omit(genus$Hyd), "Leg" = na.omit(genus$Leg),                          "Lep" = na.omit(genus$Lep), "Mas" = na.omit(genus$Mas),                          "Mel" = na.omit(genus$Mel), "Mes" = na.omit(genus$Mes),                          "Mus" = na.omit(genus$Mus), "Not" = na.omit(genus$Not),                          "Pog" = na.omit(genus$Pog), "Pse" = na.omit(genus$Pse),                          "Rat" = na.omit(genus$Rat), "Uro" = na.omit(genus$Uro),                          "Xer" = na.omit(genus$Xer), "Zyz" = na.omit(genus$Zyz))
+
+mean.shapes <- select.procrustes(shape, selector = mean, factors = genus.groups)
+mean.shapes.arr <- arrayspecs(as.data.frame(mshapes.df.t), 279, 3)
+
+genus.key <- cbind(1:14, as.vector(genus.names))
+mean.genus.color <- PlotByGroup(genus.key, 2, col.gen)
+PlotPCA(mean.shapes, 1, 2, mean.genus.color, flip.axis1 = TRUE)  # NOT WORKING
+```
+
+
+
+
 Testing trees
 ```{r}
 test.tree <- rtree(6, tip.label = letters[1:6])
