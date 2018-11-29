@@ -39,10 +39,10 @@ shape.phylo <- shape  # initiate shape optimized for phylogenetics
 dimnames(shape.phylo)[[3]] <- as.list(paste(info.traits$Genus.y, info.traits$Species.y, sep = "_"))
 ```
 
-## Calculate mean shape for each species
-This step has to be done before working with the tree. To calculate the mean shape for each species, we'll use a function from `geomorph` called `m.shape()`. To get the means, we'll subset for each unique species.
+## Calculate mean shape and centroid size for each species
+This step has to be done before working with the tree. To calculate the mean shape for each species, we'll use a function from `geomorph` called `m.shape()`. 
 
-The mean shape function, `mshape()` gives a 2D array as an output. Therefore, the `for` loop below stores mean shapes in a 2D array format recognized by `geomorph`: (n x [p x k]), where n is number of specimens, p is number of landmark points, and k is number of dimensions. We finish by converting to a 3D array with format (p x k x n). A 3D array is required by most `geomorph` functions. 
+To get the means, we'll subset for each unique species. The mean shape function, `mshape()` gives a 2D array as an output. Therefore, the `for` loop below stores mean shapes in a 2D array format recognized by `geomorph`: (n x [p x k]), where n is number of specimens, p is number of landmark points, and k is number of dimensions. Then we convert to a 3D array with format (p x k x n) since a 3D array is required by most `geomorph` functions. 
 ```{r}
 info.traits$FullName <- paste(info.traits$Genus.y, info.traits$Species.y, sep = "_")  # give names to metadata in the same format as the tree "Genus_species"
 
@@ -51,11 +51,39 @@ mean.shapes.2D <- NULL  # initiate blank data frame
 for (i in 1:length(full.names)) {
         is.taxa <- which(info.traits$FullName == full.names[i])
         shape.for.mean.2D <- shape.phylo[, , is.taxa]
-        mean.shapes.2D <- rbind(mean.shapes.2D, mshape(shape.for.mean))  # mshape() finds mean specimen; rbind() is critical, output cols must = 3
+        mean.shapes.2D <- rbind(mean.shapes.2D, mshape(shape.for.mean))  # mshape() finds mean specimen; rbind() is critical, output cols must = 3 for 3D
 }
 mean.shapes <- arrayspecs(mean.shapes.2D, 325, 3)  # convert to 3D array
-dimnames(mean.shapes)[[3]] <- full.names  # names match tree names
 ```
+
+Here, we manage the names and metadata for shape to ensure they match the tree names (Genus_species) and share the shape data's order (alphabetical by names). 
+```{r}
+dimnames(mean.shapes)[[3]] <- full.names  # shape names match tree names
+info.means <- info.traits[!duplicated(info.traits$Taxa), -c(4, 5)]  # make metadata; remove columns that don't make sense: CatNum and Order
+info.means <- info.means[order(info.means$FullName), ]  # order same as shape's
+```
+
+### Calculate mean centroid size
+We need to update the centoid size column for info.means to contain the *mean* centroid size by taxa. Centroid size is stored in the info.traits metadata table.
+```{r}
+# Calculate mean centroid size and store in info.means
+cs.means <- aggregate(info.traits[, 6], list(Taxa = info.traits$FullName), mean)
+info.means$Csize <- cs.means[, 2]  # store in vector; aggregate alphabetized it
+names(info.means)[names(info.means) == 'Csize'] <- 'MeanCsize'  # rename column
+```
+
+### Plot PCA of skull shape means by species
+Before adding the tree, we can plot the PCA of mean shapes, which will contain more species than the set subsetted by species found in the tree.
+```{r}
+# Set colors for genera and different points for species within each genus
+color.means <- PlotByGroup(info.means, "Genus", col.gen)  # standard colors
+pch.means <- PointOutDiffSpp(info.means)  # points by unique species in a genus
+
+# Plot PCA of mean shapes
+pca.means <- plotTangentSpace(mean.shapes)
+PlotPCA(pca.means, 1, 2, color.means, pch.means, flip.axis1 = TRUE)
+```
+
 
 ## Prepare the tree data for phylogenetic analyses
 The commands in `geomorph` require the tree and datasets to have exactly the same set of species.
