@@ -48,16 +48,14 @@ info.traits$FullName <- paste(info.traits$Genus.y, info.traits$Species.y, sep = 
 
 # For loop to subset shape data by species and calculate mean shape
 mean.shapes.2D <- NULL  # initiate blank data frame
-for (i in 1:length(full.names)) {
+for (i in 1:length(full.names)) {  
         is.taxa <- which(info.traits$FullName == full.names[i])
         shape.for.mean.2D <- shape.phylo[, , is.taxa]
-        mean.shapes.2D <- rbind(mean.shapes.2D, mshape(shape.for.mean))  # mshape() finds mean specimen; rbind() is critical, output cols must = 3 for 3D
+        mean.shapes.2D <- rbind(mean.shapes.2D, mshape(shape.for.mean.2D))  # mshape() finds mean specimen; rbind() is critical, output cols must = 3 for 3D
 }
 mean.shapes <- arrayspecs(mean.shapes.2D, 325, 3)  # convert to 3D array
-```
 
-Here, we manage the names and metadata for shape to ensure they match the tree names (Genus_species) and share the shape data's order (alphabetical by names). 
-```{r}
+# Make names match the tree, make metadata match mean shape data (alphabetical)
 dimnames(mean.shapes)[[3]] <- full.names  # shape names match tree names
 info.means <- info.traits[!duplicated(info.traits$Taxa), -c(4, 5)]  # make metadata; remove columns that don't make sense: CatNum and Order
 info.means <- info.means[order(info.means$FullName), ]  # order same as shape's
@@ -81,7 +79,7 @@ pch.means <- PointOutDiffSpp(info.means)  # points by unique species in a genus
 
 # Plot PCA of mean shapes
 pca.means <- plotTangentSpace(mean.shapes)
-PlotPCA(pca.means, 1, 2, color.means, pch.means, flip.axis1 = TRUE)
+PlotPCA(pca.means, 1, 2, color.means, pch.means, flip.axis1 = TRUE, flip.axis2 = TRUE)
 ```
 
 

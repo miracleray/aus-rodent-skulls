@@ -247,8 +247,8 @@ PlotPCA <- function(pca, PCx, PCy, col.grp, pch.grp = 16, flip.axis1 = F, flip.a
         # 
         # Args:
         #    PCA: an object of class plotTangentSpace
-        #    PCx: the PC intended for the x-axis.
-        #    PCy: the PC intended for the y-axis, usually x > y. 
+        #    PCx: the PC intended for the x-axis. Default is PC1.
+        #    PCy: the PC intended for the y-axis, usually x > y. Default is PC2.
         #    col.grp: a vector of colors ordered in the same way as specimens, usually made with PlotByGroup().
         #    pch.grp: an optional vector for point shapes, also usually made with PlotByGroup() function. Default is a filled circle.
         #    flip.axis1: If TRUE, reverses sign for all coordinates of PCx
@@ -401,8 +401,13 @@ PointOutDiffSpp <- function(spec.info) {
         for (i in 1:(length(unique.taxa) - 1)) {
                 
                 if (str_sub(unique.taxa[i], 1, 3) == str_sub(unique.taxa[i + 1], 1, 3)) {
+                        pch.for.taxa <- 21 + n.spp
+                        if (pch.for.taxa > 25) {  # if genus has >5 spp
+                                n.spp <- -14  # restart pch at 7
+                        }
                         pch.taxa[i + 1] <- 21 + n.spp
-                        n.spp <- n.spp + 1      
+                        n.spp <- n.spp + 1  # species counter
+                        
                 } else {
                         n.spp <- 1  # reset if no more species in that genus 
                 }
