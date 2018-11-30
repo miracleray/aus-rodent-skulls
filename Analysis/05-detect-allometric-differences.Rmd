@@ -15,7 +15,8 @@ Changing size is one of the most common ways that organisms can also change thei
 
 ### Load packages, functions, and data
 ```{r message = FALSE}
-install_github("TGuillerme/dispRity", ref = "release")
+# library(devtools)  # needed to install dispRity package
+# install_github("TGuillerme/dispRity", ref = "release")  # needed only once
 library(dispRity)
 library(stringr)
 library(data.table)
@@ -46,12 +47,12 @@ plot(x = info$Csize,
      y = pca$pc.scores[, 1], 
      xlim = c(110, 440), 
      ylim = c(-0.11, 0.14), 
-     col = col.gen, 
+     col = sp.col.gen, 
      pch = 16, 
      xlab = "Centroid size", 
      ylab = "PC1 score", 
      main = "PC1 vs Centroid Size")
-legend(413, 0.16, legend = genus.name, col = gen.color, pch = 16, cex = 0.78)
+legend(413, 0.16, legend = genus.name, col = col.phylo, pch = 16, cex = 0.78)
 text(300, 0, paste("r =", cor.assoc), col = "dark grey")
 ```
 
@@ -77,12 +78,12 @@ summary(Allo)
 plot(x = log(Allo$size),
      y = Allo$CAC, 
      xlim = c(4.72, 6.17), 
-     col = col.gen, 
+     col = sp.col.gen, 
      pch = 16, 
      main = "Predicted Allometric Shape by Genus",
      xlab = "Log centroid size", 
      ylab = "Predicted shape")
-legend(6.04, 0.085, legend = genus.name, col = gen.color, pch = 16, cex = 0.78)
+legend(6.04, 0.085, legend = genus.name, col = col.phylo, pch = 16, cex = 0.78)
 ```
 
 ### Visualize allometry using the Common Allometric Component (CAC) of shape
@@ -91,12 +92,12 @@ This plot gives an esitmate of the average allometric trend within genera.
 plot(x = log(Allo$size),
      y = Allo$CAC, 
      xlim = c(4.72, 6.17), 
-     col = col.gen, 
+     col = sp.col.gen, 
      pch = 16, 
      main = "Common Allometric Component of Shape by Genus",
      xlab = "Log centroid size", 
      ylab = "CAC")
-legend(6.04, 0.067, legend = genus.name, col = gen.color, pch = 16, cex = 0.78)
+legend(6.05, 0.082, legend = genus.name, col = col.phylo, pch = 16, cex = 0.78)
 ```
 
 ### Visualize allometry using the regression of shape on size (RegScore)
@@ -105,12 +106,12 @@ This method calculates shape scores from the regression of shape on size, and pl
 plot(x = log(Allo$size),
      y = Allo$Reg.proj, 
      xlim = c(4.72, 6.17), 
-     col = col.gen, 
+     col = sp.col.gen, 
      pch = 16, 
      main = "Regression of shape on size by Genus",
      xlab = "Log centroid size", 
      ylab = "RegScore")
-legend(6.04, 0.101, legend = genus.name, col = gen.color, pch = 16, cex = 0.78)
+legend(6.05, 0.137, legend = genus.name, col = col.phylo, pch = 16, cex = 0.78)
 ```
 
 ## Visualize the residual component of shape (size-less shape) as a PCA
@@ -119,16 +120,46 @@ plot(x = Allo$RSC[, 1],
      y = Allo$RSC[, 2], 
      xlim = c(-0.10, 0.095), # parameters used for PCAs in previous script
      ylim = c(-0.04, 0.07), 
-     col = col.gen, 
+     col = sp.col.gen, 
      pch = 16, 
      main = "Residual shape component (size-less shape)",
      xlab = "RSC PC1", 
      ylab = "RSC PC2")
-legend(0.078, 0.078, legend = genus.name, col = gen.color, pch = 16, cex = 0.78)
+legend(0.078, 0.077, legend = genus.name, col = col.phylo, pch = 16, cex = 0.78)
 ```
-Looks like a mess, but interesting that genus _Rattus_ appears to have greater variation than any other genus. 
+Size-less shape seems to have little patterns but it's interesting that genus _Rattus_ appears to have greater variation than any other genus. 
 
-### Test for greater disparity in _Rattus_
+## Test for greater morphological disparity among different arrival groups
+Australian rodents arrived in three waves: 
+1) old endemics (6-5mya), 
+2) native _Rattus_ (2-1mya), and 
+3) invasives (~300 years ago; paraphyletic) 
+
+Here we test for disparity between these three groups
+
+```{r}
+# Add row to info.traits for wave
+info.traits$Wave <- 1  
+info.traits$Wave[which(info.traits$Genus == "Rat")] <- 2
+info.traits$Wave[which(info.traits$Clade == "invRattus")] <- 3
+info.traits$Wave[which(info.traits$Clade == "Mus")] <- 4
+
+# Test for disparity
+aus.rodent.gdf <- geomorph.data.frame(coords = shape, wave = info.traits$Wave)
+wave.disparity <- morphol.disparity(coords ~ wave, groups = ~wave, iter = 1000, seed = 42, data = aus.rodent.gdf, print.progress = FALSE)
+
+# Morphological disparity (observed Procrustes variances)
+results.morph <- wave.disparity$Procrustes.var
+
+# P value results
+results <- wave.disparity$PV.dist.Pval
+results.en <- cbind(c(NA, 0.001, 0.007, "not sig"), c(NA, NA, "not sig", 0.01), c(NA, NA, NA, 0.04))
+colnames(results.en) <- c("Old Endemics", "Native Rattus", "Inv Rattus")
+rownames(results.en) <- c("Old Endemics", "Native Rattus", "Inv Rattus", "Inv Mus")
+results.en
+```
+
+### Test witih dispRity package
 Test with `dispRity` package if Rattus has greater diparity in the size-less morphospace given by the residual component of shape. Unlike the PCA above, the multivariate test below can consider all PC axes simulatenously. 
 ```{r}
 # Make lists to define old versus new endemics

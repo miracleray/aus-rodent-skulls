@@ -80,8 +80,16 @@ pch.means <- PointOutDiffSpp(info.means)  # points by unique species in a genus
 # Plot PCA of mean shapes
 pca.means <- plotTangentSpace(mean.shapes)
 PlotPCA(pca.means, 1, 2, color.means, pch.means, flip.axis1 = TRUE, flip.axis2 = TRUE)
+legend(0.142, 0.085, legend = info.means$Taxa, col = color.means, border = NULL, pch = pch.means, pt.bg = color.means, cex = 0.305)
 ```
 
+### Correlation of PC1 and PC2 wtih Centroid size
+Here we find Pearson's r for correlation with PC1 and PC2.
+```{r}
+cor.1 <- cor.test(info.means$MeanCsize, pca.means$pc.scores[, 1], method = "pearson")
+cor.1  # PC1
+cor.2 <- cor.test(info.means$MeanCsize, pca.means$pc.scores[, 2], method = "pearson")  # PC2
+```
 
 ## Prepare the tree data for phylogenetic analyses
 The commands in `geomorph` require the tree and datasets to have exactly the same set of species.
