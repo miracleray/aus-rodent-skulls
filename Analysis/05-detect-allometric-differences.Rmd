@@ -36,7 +36,7 @@ pca$pc.scores[, 1] <- -pca$pc.scores[, 1]  # flip PC1 so larger spp have larger 
 
 # Find Pearson's r for correlation with PC1
 cor <- cor.test(info$Csize, pca$pc.scores[, 1], method = "pearson")
-cor.assoc <- round(unname(cor$estimate), digits = 2)  # round to 2 sig figs
+cor.assoc <- round(unname(cor$estimate), digits = 3)  # round to 3 sig figs
 
 # Set color scheme for legend, taxa listed in order presented in phylogeny
 gen.color <- c("yellow", "darkgoldenrod4", "green", "light green", "cornflowerblue", "light blue", "blue", "dark blue", "red", "orange", "magenta", "grey", "black")  # same as col.gen but in a different order
@@ -128,6 +128,13 @@ plot(x = Allo$RSC[, 1],
 legend(0.078, 0.077, legend = genus.name, col = col.phylo, pch = 16, cex = 0.78)
 ```
 Size-less shape seems to have little patterns but it's interesting that genus _Rattus_ appears to have greater variation than any other genus. 
+
+### Test for greater standard deviation along PC1 and PC2 in Rattus
+```{r}
+res.shape <- Allo$RSC[, 1:2]  # residual shape component PC1 & 2 scores
+res.sd <- aggregate(res.shape, list(Taxa = info.traits$Wave), sd)
+res.sd
+```
 
 ## Test for greater morphological disparity among different arrival groups
 Australian rodents arrived in three waves: 
