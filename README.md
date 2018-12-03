@@ -4,7 +4,7 @@ Code author: Ariel E. Marcy
 To cite the paper and/or code:
 > Coming soonish
 
-As of November 2018, this is still a work in progress.
+As of December 2018, this is still a work in progress.
 
 After cloning this repo, remember to either set your working directory to the aus-rodent-skulls folder on your computer, or open an RStudio project from that folder.
 
@@ -44,8 +44,8 @@ All of the scripts below are in RMarkdown format (.Rmd), which can be opened in 
 * **02-calculate-user-error.Rmd** Allows users to view outliers and find major landmarking errors. Takes out replicated specimens from the shape data, finds their duplicates, and calculates user error based on repeatability for both patch datasets. 
 * **03-compare-patch-protocols.Rmd** Plots PCAs colored by genus and runs shape ~ genus * centroid size ANOVAs for both patch protocols. Visualizes landmark variation differences with Dr Thomas Guillerme's new package, `landvR`, in a color-coded heatmap.   
 * **04-plot-exploratory-PCAs.Rmd** Allows users to quickly plot PCAs with point colors and shapes according to taxa or trait information provided in the metadata table. Also loops through the 7 Australian regions to plot the PCA morphospace by region.
-* **05-detect-allometric-differences.Rmd** Tests correlation of PC1 and PC2 with centroid size. Uses `geomorph`'s `procD.allometry()` to test for significant differences in allometric slopes and intercepts by genus and by clade. Plots allometric relationships using RegScore.
-* **06-prep-data-for-phylogenetics.Rmd** Organizes the tree, shape data, and metadata in preparation for phylogenetic analyses of shape. Calculates the mean specimen shape for all species included in the 2018 Smissen & Rowe tree. 
+* **05-detect-allometry-and-morph-disparity.Rmd** Tests correlation of PC1 and PC2 with centroid size. Uses `geomorph`'s `procD.allometry()` to test for significant differences in allometric slopes and intercepts by genus and by clade. Plots allometric relationships using RegScore. Plots "size-less" residuals of allometry. Uses function `morphol.disparity()` to measure disparity by taxa, genus, and wave of immigration. 
+* **06-prep-data-for-phylogenetics.Rmd** Calculates the mean specimen shape for all species. Organizes the tree, shape data, and metadata in preparation for phylogenetic analyses of shape using the 2018 Smissen & Rowe tree. 
 
 ### Supplementary Analyses
 These analyses provide support for the supplementary materials and some observations reported in the manuscript. 
