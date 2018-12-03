@@ -499,3 +499,29 @@ MatchTips <- function(tree, vector, verbose = TRUE) {
         
         return(list("matched" = matched, "NAs" = vector.nas, "reps" = reps.num))
 }
+
+##########################
+# ReadableTable
+##########################
+
+ReadableTable <- function(table, morph.dis) {
+        # Replaces numbers in a pvalue matrix returned by morphol.disparity with "more" or "less" depending on whether the column's species has significantly more or less morphological disparity than the row species. 
+        #
+        # Args:
+        #    table: the pvalue table returned by morphol.disparity().
+        #    morph.dis: the procrustes disparity table returned by morphol.disparity().
+        #
+        # Returns:
+        #    A table of the same dimensions as the argument table with cells containing "" for non-significant values, and more or less for values where significance was found. 
+        
+        for (c in 1:dim(table)[1]) { # loop through cols then rows
+                for (r in 1:dim(table)[2]) {
+                        if (table[r, c] < 0.05) {  # if significant, test if column specie's disparity is more or less than the row species' disparity
+                                if (results.morph[c] > results.morph[r]) {
+                                        table[r, c] <- "more"  
+                                } else (table[r, c] <- "less")
+                        } else (table[r, c] <- NA)
+                }
+        }
+        return(table)
+}

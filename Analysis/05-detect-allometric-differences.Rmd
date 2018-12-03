@@ -1,5 +1,5 @@
 ---
-title: "05-detect-allometric-changes"
+title: "05-detect-allometry-and-morph-disparity"
 author: "Ariel Marcy"
 date: "10/17/2018"
 output: html_document
@@ -10,8 +10,10 @@ knitr::opts_chunk$set(echo = TRUE)
 knitr::opts_knit$set(root.dir = '../aus-rodent-skulls')
 ```
 
-# Allometry
+# Allometry and Morphological Disparity
 Changing size is one of the most common ways that organisms can also change their shape. Modifications to growth during development often have a profound impact on adult shape. The tests in this script detect how much size appears to drive shape change in our sample. 
+
+Morphological disparity tests how much Procrustes variation exists within each group (species, clade, or wave) and whether that variation is significantly different from the variation within another group. Strong allometry can constrain variation, therefore a higher morphological disparity could suggest a species' evolution is less constrained by allometry than another's. 
 
 ### Load packages, functions, and data
 ```{r message = FALSE}
@@ -145,13 +147,6 @@ Australian rodents arrived in three waves:
 Here we test for disparity between these three groups
 
 ```{r}
-# Add row to info.traits for wave
-info.traits$Wave <- 1  
-info.traits$Wave[which(info.traits$Genus == "Rat")] <- 2
-info.traits$Wave[which(info.traits$Clade == "invRattus")] <- 3
-info.traits$Wave[which(info.traits$Clade == "Mus")] <- 4
-
-# Test for disparity
 aus.rodent.gdf <- geomorph.data.frame(coords = shape, wave = info.traits$Wave)
 wave.disparity <- morphol.disparity(coords ~ wave, groups = ~wave, iter = 1000, seed = 42, data = aus.rodent.gdf, print.progress = FALSE)
 
