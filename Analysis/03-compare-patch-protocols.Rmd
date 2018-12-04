@@ -119,13 +119,19 @@ hist(sm.var.range[, 1])
 ## Plot PCAs for each protocol
 PCAs allow visual comparison of how differently the patch protocols sort the shape data. To assist, we wrote a function, `PlotByGroup()`, to match colors or other plotting attributes to groups within the dataset. These don't impact the analysis; they are just visualization aids.
 
-Here, we'll use this function to look at the morphospace colored by genus.
+Here, we'll use this function to look at the morphospace colored by genus. Since Mastacomys is technically within the genus Pseudomys (Smissen & Rowe 2018), we'll make an "Effective Genus" column.
 ```{r}
-# Colors by genus: Hyd Leg Lep Mas Mel Mes Mus Not Pog Pse Rat Uro Xer Zyz
-col.gen <- c("red", "cornflowerblue", "light green", "dark blue", "yellow", "green", "grey", "blue", "magenta", "dark blue", "black", "darkgoldenrod4", "orange", "light blue")
+# Make an Effective Genus column to better categorize Mas phylogenetically
+big.info$EGenus <- big.info$Genus
+big.info$EGenus[which(big.info$Genus == "Mas")] <- "Pse"  # Mas is effectively Pse
+sm.info$EGenus <- sm.info$Genus
+sm.info$EGenus[which(sm.info$Genus == "Mas")] <- "Pse"  # Mas is effectively Pse
+
+# Colors by EGenus: Hyd Leg Lep Mel Mes Mus Not Pog Pse(+Mas) Rat Uro Xer Zyz
+col.gen <- c("red", "cornflowerblue", "light green", "yellow", "green", "grey", "blue", "magenta", "dark blue", "black", "darkgoldenrod4", "orange", "light blue")
 
 # Colors by specimen, ordered in same way as metadata
-sp.col.gen <- PlotByGroup(big.info, "Genus", col.gen)  # is the same for big and small protocols, tested with all.equal()
+sp.col.gen <- PlotByGroup(big.info, "EGenus", col.gen)  # is the same for big and small protocols, tested with all.equal()
 
 # Set color scheme for plot legends, taxa listed in order presented in phylogeny
 col.phylo <- c("yellow", "darkgoldenrod4", "green", "light green", "cornflowerblue", "light blue", "blue", "dark blue", "red", "orange", "magenta", "grey", "black")  # same as col.gen but in a different order
@@ -151,6 +157,7 @@ plot(x = big.pca$pc.scores[, 1],
      y = big.pca$pc.scores[, 2], 
      xlab = paste("PC1 (", big.PC1, "%)", sep = ""), 
      ylab = paste("PC2 (", big.PC2, "%)", sep = ""),
+     xlim = c(-0.11, 0.171),
      asp = TRUE, 
      col = sp.col.gen, 
      bg = sp.col.gen,
@@ -158,7 +165,7 @@ plot(x = big.pca$pc.scores[, 1],
      cex = 1.5, 
      cex.axis = 1.3, 
      cex.lab = 1.3)
-legend(0.142, 0.055, legend = gen.name.phylo, col = col.phylo, pch = 16, cex = 0.78)
+legend(0.15, 0.055, legend = gen.name.phylo, col = col.phylo, pch = 16, cex = 0.78)
 ```
 
 ### PCA plot of small patch protocol
@@ -180,6 +187,7 @@ plot(x = sm.pca$pc.scores[, 1],
      y = sm.pca$pc.scores[, 2], 
      xlab = paste("PC1 (", sm.PC1, "%)", sep = ""), 
      ylab = paste("PC2 (", sm.PC2, "%)", sep = ""),
+     xlim = c(-0.11, 0.163),
      asp = T,
      col = sp.col.gen, 
      bg = sp.col.gen,
@@ -187,7 +195,7 @@ plot(x = sm.pca$pc.scores[, 1],
      cex = 1.5, 
      cex.axis = 1.3, 
      cex.lab = 1.3)
-legend(0.143, 0.055, legend = gen.name.phylo, col = col.phylo, pch = 16, cex = 0.78)
+legend(0.15, 0.055, legend = gen.name.phylo, col = col.phylo, pch = 16, cex = 0.78)
 ```
 
 ## Compare performance of patch protocols in ANOVA by genus and centroid size
@@ -196,14 +204,14 @@ The patch protocols look very similar on the PCAs, which suggests that they do n
 ### Run shape ~ genus * Csize ANOVAs on each protocol:  
 Big patch protocol:
 ```{r}
-gdf <- geomorph.data.frame(genus = big.info$Genus, size = big.info$Csize)
+gdf <- geomorph.data.frame(genus = big.info$EGenus, size = big.info$Csize)
 big.procD <- procD.lm(big.shape ~ size * genus, data = gdf)
 print(big.procD)
 ```
 
 Small patch protocol:
 ```{r}
-gdf <- geomorph.data.frame(genus = sm.info$Genus, size = sm.info$Csize)
+gdf <- geomorph.data.frame(genus = sm.info$EGenus, size = sm.info$Csize)
 sm.procD <- procD.lm(sm.shape ~ size * genus, data = gdf)
 print(sm.procD)
 ```

@@ -33,11 +33,8 @@ Centroid size is a proxy for body size. Usually in GMM studies, the centroid siz
 
 Here we test for a significant correlation using Pearson's R and plot centroid size versus PC1.
 ```{r}
-pca <- plotTangentSpace(shape, axis1 = 1, axis2 = 2, verbose = T)
-pca$pc.scores[, 1] <- -pca$pc.scores[, 1]  # flip PC1 so larger spp have larger x-values
-
 # Find Pearson's r for correlation with PC1
-cor <- cor.test(info$Csize, pca$pc.scores[, 1], method = "pearson")
+cor <- cor.test(info$Csize, PCA$pc.scores[, 1], method = "pearson")
 cor.assoc <- round(unname(cor$estimate), digits = 3)  # round to 3 sig figs
 
 # Set color scheme for legend, taxa listed in order presented in phylogeny
@@ -46,7 +43,7 @@ genus.name <- c("Mel", "Uro", "Mes", "Lep", "Leg", "Zyz", "Not", "Pse", "Hyd", "
 
 # Plot centroid size versus PC1 to see correlation
 plot(x = info$Csize, 
-     y = pca$pc.scores[, 1], 
+     y = PCA$pc.scores[, 1], 
      xlim = c(110, 440), 
      ylim = c(-0.11, 0.14), 
      col = sp.col.gen, 
@@ -61,7 +58,7 @@ text(300, 0, paste("r =", cor.assoc), col = "dark grey")
 ### Test for correlation in PC2
 ```{r}
 # Find Pearson's r for correlation with PC2
-cor.PC2 <- cor.test(info$Csize, pca$pc.scores[, 2], method = "pearson")
+cor.PC2 <- cor.test(info$Csize, PCA$pc.scores[, 2], method = "pearson")
 cor.assoc.PC2 <- round(unname(cor.PC2$estimate), digits = 3)
 cor.pval.PC2 <- round(unname(cor.PC2$p.value), digits = 3)
 paste("Correlation is", cor.assoc.PC2, "with p =", cor.pval.PC2) 
@@ -72,7 +69,7 @@ Correlation of PC2 with size is statistically indistinguishable from 0.
 In _geomorph_, the function `procD.allometry()` does a Procrustes ANOVA with permutation to find patterns of shape covariation with centroid size. 
 ```{r}
 # Run Procrustes ANOVA on shape and size with genus as the grouping variable
-gdf <- geomorph.data.frame(coords = shape, csize = info$Csize, genus = info$Genus)
+gdf <- geomorph.data.frame(coords = shape, csize = info$Csize, genus = info$EGenus)
 Allo <- procD.allometry(coords ~ csize, ~ genus, logsz = TRUE, iter = 999, RRPP = TRUE, print.progress = TRUE, data = gdf)
 summary(Allo)
 
@@ -85,7 +82,7 @@ plot(x = log(Allo$size),
      main = "Predicted Allometric Shape by Genus",
      xlab = "Log centroid size", 
      ylab = "Predicted shape")
-legend(6.04, 0.085, legend = genus.name, col = col.phylo, pch = 16, cex = 0.78)
+legend(6.05, 0.115, legend = genus.name, col = col.phylo, pch = 16, cex = 0.78)
 ```
 
 ### Visualize allometry using the Common Allometric Component (CAC) of shape
@@ -99,7 +96,7 @@ plot(x = log(Allo$size),
      main = "Common Allometric Component of Shape by Genus",
      xlab = "Log centroid size", 
      ylab = "CAC")
-legend(6.05, 0.082, legend = genus.name, col = col.phylo, pch = 16, cex = 0.78)
+legend(6.05, 0.115, legend = genus.name, col = col.phylo, pch = 16, cex = 0.78)
 ```
 
 ### Visualize allometry using the regression of shape on size (RegScore)
@@ -129,23 +126,66 @@ plot(x = Allo$RSC[, 1],
      ylab = "RSC PC2")
 legend(0.078, 0.077, legend = genus.name, col = col.phylo, pch = 16, cex = 0.78)
 ```
-Size-less shape seems to have little patterns but it's interesting that genus _Rattus_ appears to have greater variation than any other genus. 
+Size-less shape seems to have few patterns but it's interesting that genus _Rattus_ appears to have greater variation than any other genus. 
 
-### Test for greater standard deviation along PC1 and PC2 in Rattus
+## Visualize the residual component of shape as a PCA by immigration wave
+```{r}
+plot(x = Allo$RSC[, 1],
+     y = Allo$RSC[, 2], 
+     xlim = c(-0.10, 0.095),
+     ylim = c(-0.04, 0.07), 
+     col = sp.col.wave, 
+     pch = 16, 
+     main = "Residual shape component (size-less shape)",
+     xlab = "RSC PC1", 
+     ylab = "RSC PC2")
+legend(-0.11, -0.01, legend = c("AOEs", "Native Rattus", "Invasives"), col = c("blue", "black", "grey"), pch = 16, cex = 0.78)
+```
+
+### Test for greater standard deviation along PC1 and PC2 in native Rattus
 ```{r}
 res.shape <- Allo$RSC[, 1:2]  # residual shape component PC1 & 2 scores
 res.sd <- aggregate(res.shape, list(Taxa = info.traits$Wave), sd)
 res.sd
 ```
 
-## Test for greater morphological disparity among different arrival groups
+## Test for morphological disparity among species
+Here we test for morphological disparity among all 35 different species.
+```{r}
+rodent.spp.gdf <- geomorph.data.frame(coords = shape, spp = info.traits$ETaxa)
+spp.disparity <- morphol.disparity(coords ~ spp, groups = ~ spp, iter = 1000, seed = 42, data = rodent.spp.gdf, print.progress = FALSE)
+
+# Morphological disparity results
+results.morph <- spp.disparity$Procrustes.var  # observed Procrustes variances
+results.spp <- spp.disparity$PV.dist.Pval  # p value results
+```
+
+### Make a readable table
+There are 1125 cells in the p value results table. The ReadableTable() function provides an easier way to read them. 
+```{r}
+results.spp.en <- ReadableTable(results.spp, results.morph)
+```
+
+## Test for morphological disparity among genera
+Here we test for morphological disparity among the different genera.
+```{r}
+rodent.gen.gdf <- geomorph.data.frame(coords = shape, gen = info.traits$EGenus)
+gen.disparity <- morphol.disparity(coords ~ gen, groups = ~ gen, iter = 1000, seed = 42, data = rodent.gen.gdf, print.progress = FALSE)
+
+# Morphological disparity results
+results.gen <- gen.disparity$Procrustes.var  # observed Procrustes variances
+results.p <- gen.disparity$PV.dist.Pval  # p value results
+
+results.gen.en <- ReadableTable(results.p, results.gen)
+```
+
+### Test for greater morphological disparity among waves
 Australian rodents arrived in three waves: 
 1) old endemics (6-5mya), 
 2) native _Rattus_ (2-1mya), and 
 3) invasives (~300 years ago; paraphyletic) 
 
-Here we test for disparity between these three groups
-
+Here we test for disparity between these three groups:
 ```{r}
 aus.rodent.gdf <- geomorph.data.frame(coords = shape, wave = info.traits$Wave)
 wave.disparity <- morphol.disparity(coords ~ wave, groups = ~wave, iter = 1000, seed = 42, data = aus.rodent.gdf, print.progress = FALSE)
@@ -155,7 +195,7 @@ results.morph <- wave.disparity$Procrustes.var
 
 # P value results
 results <- wave.disparity$PV.dist.Pval
-results.en <- cbind(c(NA, 0.001, 0.007, "not sig"), c(NA, NA, "not sig", 0.01), c(NA, NA, NA, 0.04))
+results.en <- ReadableTable(results, results.morph)
 colnames(results.en) <- c("Old Endemics", "Native Rattus", "Inv Rattus")
 rownames(results.en) <- c("Old Endemics", "Native Rattus", "Inv Rattus", "Inv Mus")
 results.en

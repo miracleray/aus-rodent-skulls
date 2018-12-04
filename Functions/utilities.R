@@ -392,7 +392,7 @@ PointOutDiffSpp <- function(spec.info) {
         # Returns:
         #     A numeric vector of pch values which can be fed to PlotByGroup() such that species from the same genus have different points. 
         
-        spec.info$Taxa <- paste(str_sub(spec.info$Genus, 1, 3), str_sub(spec.info$Species, 1, 3), sep = "_")  # Mus musculus -> Mus_mus
+        spec.info$Taxa <- paste(str_sub(spec.info$EGenus, 1, 3), str_sub(spec.info$Species, 1, 3), sep = "_")  # Mus musculus -> Mus_mus
         unique.taxa <- levels(as.factor(spec.info$Taxa))
         pch.taxa <- rep(21, length(unique.taxa))  # default pch = #21 circle
         
