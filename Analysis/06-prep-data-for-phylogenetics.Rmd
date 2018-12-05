@@ -120,7 +120,7 @@ for (i in 1:length(label.list)) {
 }
 ```
 
-### Rename nodes ??
+### Rename nodes
 Since the 2018 Smissen & Rowe tree focused primarily on New Guinae species, it does not have all of the Australian species in our shape dataset. However, it does include sister species with the same relative branch length to other genera in the study. Therefore, we decided to rename some of the nodes with Australian species. 
 
 **Renamed nodes:**
@@ -142,37 +142,39 @@ nodelabels(cex = 0.1)
 axisPhylo()
 ```
 
-### Prune the shape dataset
+### Prune the tree and shape datasets to match each other
 Now that the names in the Smissen & Rowe tree can be compared to our info.traits metadata, we can shape dataset to have all the same species.
 
-First, Re-order the metadata and shape datasets to match the order of species found in the tree. We created a function, `MatchedTips()` to do most of the work (see utilities.R).
+First, prune the tree of species not in the shape data
 ```{r}
-
-
-# prune species not in tree
-
-
-# MatchedTips()$matched is a vector of indices matching the shape data to the tree with no duplicated/replicated entries of the tree. See more in utlities.R.
-MatchTips(renamed.tree, unique(info.traits$FullName))
-
-info.tree <- info.traits[MatchTips(renamed.tree, info.traits$FullName)$matched, ]
-shape.tree <- shape[ , , MatchTips(renamed.tree, dimnames(shape)[[3]])$matched]
-```
-
-
-```{r}
-# Prune tree
-concord <- name.check(renamed.tree, info.traits$FullName)  # check concordance
+concord <- name.check(renamed.tree, renamed.tree$tip.label, dimnames(mean.shapes)[[3]])  # check concordance
 aus.tree <- drop.tip(renamed.tree, concord$tree_not_data)  # prune tree to Aus
-name.check(aus.tree, info.traits$FullName)  # double check
+```
 
+Second, remove duplicates of species in the tree
+```{r}
+dupes <- which(duplicated(aus.tree$tip.label))
+aus.tree <- drop.tip(aus.tree, dupes)
+```
+
+Third, subset and re-order the metadata and shape datasets to match the order of species found in the tree. 
+```{r}
+# Subset
+to.remove <- name.check(aus.tree, aus.tree$tip.label, dimnames(mean.shapes)[[3]])
+info.means.tree <- info.means[!is.element(info.means$FullName, to.remove$data_not_tree), ]  # metadata
+mean.shapes.tree <- mean.shapes[, , !is.element(info.means$FullName, to.remove$data_not_tree)]  # shape data
+
+# Re-order to match tree tip order
+tree.order <- match(aus.tree$tip.label, info.means.tree$FullName)
+info.means.tree <- info.means.tree[tree.order, ]  # metadata
+mean.shapes.tree <- mean.shapes.tree[, , tree.order]  # shape data
 ```
 
 
-### Prune the tree to match the shape dataset
 
 ```{r}
-drop.tree
+
+
 
 ```
 
@@ -183,7 +185,6 @@ drop.tree
 
 
 # Basement
-
 
 ## Calculate mean shape for each species with `select.procrustes()`
 This step has to be done before working with the tree. To calculate the mean shape for each species, we'll use a function from the new package, `landvR`. The results are the same as `geomorph`'s `m.shape()` applied to the shape data, subsetted for each genera (evaluated as the same using all.equal() -Dr Thomas Guillerme, `landvR` author).
@@ -210,9 +211,6 @@ mean.genus.color <- PlotByGroup(genus.key, 2, col.gen)
 PlotPCA(mean.shapes, 1, 2, mean.genus.color, flip.axis1 = TRUE)  # NOT WORKING
 ```
 
-
-
-
 Testing trees
 ```{r}
 test.tree <- rtree(6, tip.label = letters[1:6])
@@ -221,47 +219,12 @@ test.shape <- c(letters[1:6])
 MatchTips(test.tree, test.shape)
 ```
 
-
-2) Put the list of shape specimens in the same order as the tree.
+We created a function, `MatchedTips()` to do most of the work (see utilities.R).
 ```{r}
-# Make a list of shape specimens in the same order as the tree
-is.in.tree <- !is.na(tree.index)
-spp.in.tree <- spp.in.shape[is.in.tree]  # remove species not in tree
-in.tree.index <- tree.index[is.in.tree]  # remove 0's of species not in tree
-spp.in.tree.order <- spp.in.tree[order(in.tree.index)]  # spp ordered like tree
-```
+# MatchedTips()$matched is a vector of indices matching the shape data to the tree with no duplicated/replicated entries of the tree. See more in utlities.R.
+MatchTips(aus.tree, unique(info.traits$FullName))
 
-3) Subset the metadata and shape datasets by the specimens in the tree.
-```{r}
-# Find index numbers of species in tree, return NA if not present
-tree.index.meta <- vector()
-for (i in 1:dim(info.traits)[1]) {
-       tree.index.meta <- c(tree.index.meta, (match(info.traits$FullName[i], spp.in.tree)))
-}
-is.in.tree.meta <- !is.na(tree.index.meta)  # converts index numbers to logical
+info.tree <- info.traits[MatchTips(aus.tree$tip.label, info.means$FullName)$matched, ]
 
-# Subset the datasets
-info.tree <- info.traits[is.in.tree.meta, ]  # metadata
-shape.tree <- shape[, , is.in.tree.meta]  # shape data
-
-### 4) 
-# Match the index numbers to species name with a new column
-tree.key <- as.data.frame(cbind(in.tree.index, spp.in.tree))
-colnames(tree.key) <- c("Index", "FullName")
-
-# Merge new key with metadata and sort the way the dimnames of shape will order the specimens: FullName (which Index covers) and then CatNum
-info.tree <- merge(info.tree, tree.key, by = "FullName")
-info.tree <- info.tree[order(info.tree$Index, info.tree$CatNum), ]  # re-ordered
-```
-
-### Prob trash
-```{r}
-# Make FullName column for shape data
-spp.in.shape <- unique(info.traits$FullName)
-
-# Test which are present in the tree, and if present return index of spp in tree
-tree.index <- vector()
-for (spp in spp.in.shape) {
-       tree.index <- c(tree.index, (match(spp, spp.in.tree$FullName)))
-}
+shape.tree <- shape[ , , MatchTips(aus.tree$tip.label, dimnames(mean.shapes)[[3]])$matched]
 ```
