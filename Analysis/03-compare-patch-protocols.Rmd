@@ -60,12 +60,23 @@ The next step is to make a heatmap showing the size of variation and direction o
 # Wrap specimens on the tangent space
 big.wrap.PCA <- plotTangentSpace(big.shape, verbose = FALSE)
 
-# Select extreme specimens (the ones that make the warp-meshes)
-big.hypothetical.1 <- big.wrap.PCA$pc.shapes[[1]]
-big.hypothetical.2 <- big.wrap.PCA$pc.shapes[[2]]
+# Select extreme specimens (the ones that make the warp-meshes) on PC1
+big.hypothetical.1 <- big.wrap.PCA$pc.shapes[[1]]  # PC1 min
+big.hypothetical.2 <- big.wrap.PCA$pc.shapes[[2]]  # PC1 max
 
 # Plot the range of variation along PC1 using a heat color scheme
 PC1.var.plot <- procrustes.var.plot(big.hypothetical.1, big.hypothetical.2, col = heat.colors, col.val = big.PC1.var[, "radius"], labels = F)
+```
+
+**Repeat the steps immediately above for PC2**
+The pc.shapes[1] and [2] correspond to PC1min and PC1max. Therefore we can adjust the same big.wrap.PCA to plot the heatmaps for PC2. 
+```{r}
+# Select extreme specimens on PC2
+big.hypothetical.3 <- big.wrap.PCA$pc.shapes[[3]]  # PC2 min
+big.hypothetical.4 <- big.wrap.PCA$pc.shapes[[4]]  # PC2 max
+
+# Plot the range of variation along PC2 using a heat color scheme
+PC1.var.plot <- procrustes.var.plot(big.hypothetical.3, big.hypothetical.4, col = heat.colors, col.val = big.PC1.var[, "radius"], labels = F)
 ```
 
 ## Repeat landmark variation heatmap for small patch protocol
@@ -100,6 +111,17 @@ sm.hypothetical.2 <- sm.wrap.PCA$pc.shapes[[2]]
 PC1.var.plot <- procrustes.var.plot(sm.hypothetical.1, sm.hypothetical.2, col = heat.colors, col.val = sm.PC1.var[, "radius"], labels = F)
 ```
 The heatmaps provide a statistically rigorous way to visualize the relative variation of landmarks across a protocol. In other words, the colors show us which parts of the skull vary most and if the protocols emphasize different patterns. 
+
+**Make heatmap for small patch PC2**
+The pc.shapes[1] and [2] correspond to PC1min and PC1max. Therefore we can adjust the same sm.wrap.PCA to plot the heatmaps for PC2. 
+```{r}
+# Select extreme specimens on PC2
+sm.hypothetical.3 <- sm.wrap.PCA$pc.shapes[[3]]  # PC2 min
+sm.hypothetical.4 <- sm.wrap.PCA$pc.shapes[[4]]  # PC2 max
+
+# Plot the range of variation along PC2 using a heat color scheme
+PC1.var.plot <- procrustes.var.plot(sm.hypothetical.3, sm.hypothetical.4, col = heat.colors, col.val = sm.PC1.var[, "radius"], labels = F)
+```
 
 ### Compare histograms of landmark variation by protocol
 We can quantify this variation with histograms of the variation for each protocol. 

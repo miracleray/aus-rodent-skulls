@@ -31,8 +31,8 @@ load(file = "../Data/Processed/03-sm-PCA-with-color.rda")
 load(file = "../Data/Processed/04-sm-data-with-traits.rda")
 ```
 
-### Rename dimnames of shape array to match phylogeny
-First, we'll rename the dimnames for the shape dataset so that it's only "Genus_Species". This is so we can re-order the shape data to match the tree later on. (We can still reference the CatNum in the metadata.)
+### Rename shape array to match phylogeny
+First, we'll rename the dimnames for the shape dataset so that it's only "Genus_species". This is so we can re-order the shape data to match the tree later on. (We can still reference the CatNum in the metadata.)
 ```{r}
 shape.phylo <- shape  # initiate shape optimized for phylogenetics
 dimnames(shape.phylo)[[3]] <- as.list(paste(info.traits$Genus.y, info.traits$Species.y, sep = "_"))
