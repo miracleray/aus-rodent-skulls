@@ -14,14 +14,13 @@ knitr::opts_knit$set(root.dir = '../aus-rodent-skulls')
 Evolutionary studies must take into account the phylogenetic tree because related species do not behave the same as independent samples. 
 
 Many of these steps are based on Dr Meriam Zelditch et al.'s A Practical Companion (2012). 
-> Zelditch ML Swiderski D Sheets HD . 2012. A practical companion to geometric morphometrics for biologists: running analyses in freely-available software . Available at: http://booksite.elsevier.com/9780123869036.
+> Zelditch ML Swiderski D Sheets HD. 2012. A practical companion to geometric morphometrics for biologists: running analyses in freely-available software. Available at: http://booksite.elsevier.com/9780123869036.
 
 ### Load packages, functions, and data
 ```{r message = FALSE}
-library(stringr)  # standard packages from here on
+library(stringr)
 library(data.table)
 library(geomorph)
-library(abind)  # needed to bind 2D arrays together into 3D arrays
 library(ape)  # needed to work with phylogenies from here on
 library(geiger)
 library(nlme)
@@ -45,6 +44,7 @@ This step has to be done before working with the tree. To calculate the mean sha
 To get the means, we'll subset for each unique species. The mean shape function, `mshape()` gives a 2D array as an output. Therefore, the `for` loop below stores mean shapes in a 2D array format recognized by `geomorph`: (n x [p x k]), where n is number of specimens, p is number of landmark points, and k is number of dimensions. Then we convert to a 3D array with format (p x k x n) since a 3D array is required by most `geomorph` functions. 
 ```{r}
 info.traits$FullName <- paste(info.traits$Genus.y, info.traits$Species.y, sep = "_")  # give names to metadata in the same format as the tree "Genus_species"
+full.names <- unique(info.traits$FullName)
 
 # For loop to subset shape data by species and calculate mean shape
 mean.shapes.2D <- NULL  # initiate blank data frame
@@ -68,27 +68,31 @@ We need to update the centoid size column for info.means to contain the *mean* c
 cs.means <- aggregate(info.traits[, 6], list(Taxa = info.traits$FullName), mean)
 info.means$Csize <- cs.means[, 2]  # store in vector; aggregate alphabetized it
 names(info.means)[names(info.means) == 'Csize'] <- 'MeanCsize'  # rename column
+
+# Sort shape by alphabetical order, too
+mean.shapes <- mean.shapes[ , , sort(dimnames(mean.shapes)[[3]])]
 ```
 
 ### Plot PCA of skull shape means by species
 Before adding the tree, we can plot the PCA of mean shapes, which will contain more species than the set subsetted by species found in the tree.
 ```{r}
 # Set colors for genera and different points for species within each genus
-color.means <- PlotByGroup(info.means, "Genus", col.gen)  # standard colors
+col.means <- PlotByGroup(info.means, "EGenus", col.gen)  # standard colors
 pch.means <- PointOutDiffSpp(info.means)  # points by unique species in a genus
 
 # Plot PCA of mean shapes
 pca.means <- plotTangentSpace(mean.shapes)
-PlotPCA(pca.means, 1, 2, color.means, pch.means, flip.axis1 = TRUE, flip.axis2 = TRUE)
-legend(0.142, 0.085, legend = info.means$Taxa, col = color.means, border = NULL, pch = pch.means, pt.bg = color.means, cex = 0.305)
+PlotPCA(pca.means, 1, 2, col.means, pch.means, flip.axis1 = TRUE)
+legend(0.142, 0.047, legend = info.means$Taxa, col = col.means, border = NULL, pch = pch.means, pt.bg = col.means, cex = 0.305)
 ```
 
 ### Correlation of PC1 and PC2 wtih Centroid size
 Here we find Pearson's r for correlation with PC1 and PC2.
 ```{r}
-cor.1 <- cor.test(info.means$MeanCsize, pca.means$pc.scores[, 1], method = "pearson")
+cor.1 <- cor.test(info.means$MeanCsize, -pca.means$pc.scores[, 1], method = "pearson")  # remember to flip axis
 cor.1  # PC1
-cor.2 <- cor.test(info.means$MeanCsize, pca.means$pc.scores[, 2], method = "pearson")  # PC2
+cor.2 <- cor.test(info.means$MeanCsize, pca.means$pc.scores[, 2], method = "pearson")  
+cor.2  # PC2
 ```
 
 ## Prepare the tree data for phylogenetic analyses
