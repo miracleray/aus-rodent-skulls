@@ -170,13 +170,42 @@ info.means.tree <- info.means.tree[tree.order, ]  # metadata
 mean.shapes.tree <- mean.shapes.tree[, , tree.order]  # shape data
 ```
 
+## Phylogenetic Analyses
 
-
+### Evolutionary allometry:
 ```{r}
+# Centroid size only
+evo.allo.gdf <- geomorph.data.frame(shape = mean.shapes.tree, CS = info.means.tree$MeanCsize)
+evo.allo <- procD.pgls(shape ~CS, aus.tree, data = evo.allo.gdf)
+evo.allo
 
-
-
+# Interaction with genus
+evo.allo.gen.gdf <- geomorph.data.frame(shape = mean.shapes.tree, CS = info.means.tree$MeanCsize, genus = info.means.tree$EGenus)
+evo.allo.gen <- procD.pgls(shape ~CS * genus, aus.tree, data = evo.allo.gen.gdf)
+evo.allo.gen
 ```
+
+**Historical Inference: Evolutionary transitions in size and shape**
+First try with mean shapes:
+```{r}
+ancestral.shapes <- plotGMPhyloMorphoSpace(aus.tree,
+mean.shapes.tree, tip.labels = T, node.labels = F)
+```
+
+Next, try with "size-less" residuals of mean shape:
+```{r}
+ancestral.res <- plotGMPhyloMorphoSpace(aus.tree,
+evo.allo$pgls.residuals, tip.labels = T, node.labels = F)
+
+plotRefToTarget()
+```
+
+
+
+
+
+
+
 
 
 
