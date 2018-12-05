@@ -1,5 +1,5 @@
 ---
-title: "06-prep-data-for-phylogenetics"
+title: "06-run-phylogenetic-analyses"
 author: "Ariel Marcy"
 date: "11/19/2018"
 output: html_document
@@ -171,6 +171,10 @@ mean.shapes.tree <- mean.shapes.tree[, , tree.order]  # shape data
 ```
 
 ## Phylogenetic Analyses
+First, test for phylogenetic signal in the shape data. 
+```{r}
+physignal(mean.shapes.tree, aus.tree)
+```
 
 ### Evolutionary allometry:
 ```{r}
@@ -196,19 +200,41 @@ Next, try with "size-less" residuals of mean shape:
 ```{r}
 ancestral.res <- plotGMPhyloMorphoSpace(aus.tree,
 evo.allo$pgls.residuals, tip.labels = T, node.labels = F)
-
-plotRefToTarget()
 ```
 
+### Compare evolutionary rates
+Given the new world monkey papers (Chervaud & Marriog 2005, 2009?), we would expect the carnivores to have the slowest rates of evolution and rodents, which evolve along the allometric line to have the greatest rates of evolution. 
 
+First, we need to make sure the data meets the brownian motion assumption required by the Kmult method, based on Blomberg's K (Blomberg et al. 2003), 
+```{r} 
+### NOT WORKING YET ###
+mean.shapes.tree.2D <- two.d.array(mean.shapes.tree)
+aus.dtt <- dtt(mean.shapes.tree.2D, aus.tree, plot = TRUE)
+```
 
+**Carnivores vs non-carnivores**
+```{r}
+is.carnivore <- as.numeric(info.means.tree$Feeding == "Carnivorous")
+names(is.carnivore) <- info.means.tree$FullName
+compare.evol.rates(mean.shapes.tree, aus.tree, is.carnivore)
 
+# Carnivores vs waves
+carn.vs.waves <- info.means.tree$Wave - is.carnivore  # makes carnivores = 0
+names(carn.vs.waves) <- info.means.tree$FullName
+compare.evol.rates(mean.shapes.tree, aus.tree, carn.vs.waves)
+```
+Neither test showed a significant difference in evolutionary rates. 
 
+### Compare evolutionary rates of centroid size by wave
+```{r}
+Csize <- matrix(info.means.tree$MeanCsize, dimnames = list(info.means.tree$FullName))  # make matrix Csize with names
+gp.wave <- info.means.tree$Wave
+gp.wave[length(gp.wave)] <- 3  # group Mus with invasive Rattus
+names(gp.wave) <- info.means.tree$FullName
+compare.evol.rates(Csize, aus.tree, gp = gp.wave, iter = 49)
 
-
-
-
-
+```
+AOEs have the highest rate of centroid size evolution, especially compared to _Rattus_. 
 
 
 
