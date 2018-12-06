@@ -212,6 +212,19 @@ mean.shapes.tree.2D <- two.d.array(mean.shapes.tree)
 aus.dtt <- dtt(mean.shapes.tree.2D, aus.tree, plot = TRUE)
 ```
 
+**_Notomys_ vs Pseudomys vs AOEs vs Other**
+```{r}
+# Set up grouping factor
+gp.notomys <- rep(0, dim(info.means.tree)[1])  # set "other" as 0
+gp.notomys[which(info.means.tree$Wave == 1)] <- 1  # set AOEs to 1
+gp.notomys[which(info.means.tree$Genus == "Not")] <- 2  # set Notomys
+gp.notomys[which(info.means.tree$EGenus == "Pse")] <- 3  # set Pseudomys
+names(gp.notomys) <- info.means.tree$FullName  # required to run analysis
+
+# Run analysis
+compare.evol.rates(mean.shapes.tree, aus.tree, gp.notomys)
+```
+
 **Carnivores vs non-carnivores**
 ```{r}
 is.carnivore <- as.numeric(info.means.tree$Feeding == "Carnivorous")
@@ -224,6 +237,16 @@ names(carn.vs.waves) <- info.means.tree$FullName
 compare.evol.rates(mean.shapes.tree, aus.tree, carn.vs.waves)
 ```
 Neither test showed a significant difference in evolutionary rates. 
+
+**Carnivores vs herbivores**
+Mastacomys fuscus and Pseudomys oralis are the most specialized herbivores.
+```{r}
+gp.cvh <- as.numeric(info.means.tree$Feeding == "Carnivorous")
+gp.cvh[which(info.means.tree$Taxa == "M_fus")] <- 2
+gp.cvh[which(info.means.tree$Taxa == "P_ora")] <- 2
+names(gp.cvh) <- info.means.tree$FullName
+compare.evol.rates(mean.shapes.tree, aus.tree, gp.cvh)
+```
 
 ### Compare evolutionary rates of centroid size by wave
 ```{r}
