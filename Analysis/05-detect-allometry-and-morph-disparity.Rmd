@@ -157,7 +157,7 @@ spp.disparity <- morphol.disparity(coords ~ spp, groups = ~ spp, iter = 1000, se
 
 # Morphological disparity results
 results.morph <- spp.disparity$Procrustes.var  # observed Procrustes variances
-results.spp <- spp.disparity$PV.dist.Pval  # p value results
+results.spp <- p.adjust(spp.disparity$PV.dist.Pval, method = "holm")  # p value results corrected for multiple comparisons
 ```
 
 ### Make a readable table
@@ -174,7 +174,7 @@ gen.disparity <- morphol.disparity(coords ~ gen, groups = ~ gen, iter = 1000, se
 
 # Morphological disparity results
 results.gen <- gen.disparity$Procrustes.var  # observed Procrustes variances
-results.p <- gen.disparity$PV.dist.Pval  # p value results
+results.p <- p.adjust(gen.disparity$PV.dist.Pval, method = "holm")  # p value results
 
 results.gen.en <- ReadableTable(results.p, results.gen)
 ```
@@ -194,9 +194,9 @@ wave.disparity <- morphol.disparity(coords ~ wave, groups = ~wave, iter = 1000, 
 results.morph <- wave.disparity$Procrustes.var
 
 # P value results
-results <- wave.disparity$PV.dist.Pval
+results <- p.adjust(wave.disparity$PV.dist.Pval, method = "holm")
 results.en <- ReadableTable(results, results.morph)
-colnames(results.en) <- c("Old Endemics", "Native Rattus", "Inv Rattus")
+colnames(results) <- c("Old Endemics", "Native Rattus", "Inv Rattus")
 rownames(results.en) <- c("Old Endemics", "Native Rattus", "Inv Rattus", "Inv Mus")
 results.en
 ```

@@ -187,6 +187,12 @@ evo.allo
 evo.allo.gen.gdf <- geomorph.data.frame(shape = mean.shapes.tree, CS = info.means.tree$MeanCsize, genus = info.means.tree$EGenus)
 evo.allo.gen <- procD.pgls(shape ~CS * genus, aus.tree, data = evo.allo.gen.gdf)
 evo.allo.gen
+
+# Example of a test of homogeneity of slopes, plus pairwise slopes comparisons
+HOS <- procD.pgls(f1 = shape ~ log(CS) * genus, aus.tree, data = evo.allo.gen.gdf)
+summary(HOS, formula = FALSE) # formulas too long to print
+
+
 ```
 
 **Historical Inference: Evolutionary transitions in size and shape**
@@ -258,51 +264,3 @@ compare.evol.rates(Csize, aus.tree, gp = gp.wave, iter = 49)
 
 ```
 AOEs have the highest rate of centroid size evolution, especially compared to _Rattus_. 
-
-
-
-
-# Basement
-
-## Calculate mean shape for each species with `select.procrustes()`
-This step has to be done before working with the tree. To calculate the mean shape for each species, we'll use a function from the new package, `landvR`. The results are the same as `geomorph`'s `m.shape()` applied to the shape data, subsetted for each genera (evaluated as the same using all.equal() -Dr Thomas Guillerme, `landvR` author).
-```{r}
-# Define genera in data frame with for loop using which
-genus.names <- sort(unique(info.traits$Genus))
-genus <- NULL  # initiate blank data frame
-for (i in 1:length(genus.names)) {
-        is.genus <- which(info.traits$Genus == genus.names[i])
-        genus.col <- c(is.genus, rep(NA, (78 - length(is.genus))))
-        genus <- cbind(genus, genus.col)
-}
-colnames(genus) <- genus.names
-genus2 <- as.data.frame(genus)  # required for subsetting with $ in next step
-
-# Calculate mean shape
-genus.groups = list("Hyd" = na.omit(genus$Hyd), "Leg" = na.omit(genus$Leg),                          "Lep" = na.omit(genus$Lep), "Mas" = na.omit(genus$Mas),                          "Mel" = na.omit(genus$Mel), "Mes" = na.omit(genus$Mes),                          "Mus" = na.omit(genus$Mus), "Not" = na.omit(genus$Not),                          "Pog" = na.omit(genus$Pog), "Pse" = na.omit(genus$Pse),                          "Rat" = na.omit(genus$Rat), "Uro" = na.omit(genus$Uro),                          "Xer" = na.omit(genus$Xer), "Zyz" = na.omit(genus$Zyz))
-
-mean.shapes <- select.procrustes(shape, selector = mean, factors = genus.groups)
-mean.shapes.arr <- arrayspecs(as.data.frame(mshapes.df.t), 279, 3)
-
-genus.key <- cbind(1:14, as.vector(genus.names))
-mean.genus.color <- PlotByGroup(genus.key, 2, col.gen)
-PlotPCA(mean.shapes, 1, 2, mean.genus.color, flip.axis1 = TRUE)  # NOT WORKING
-```
-
-Testing trees
-```{r}
-test.tree <- rtree(6, tip.label = letters[1:6])
-test.shape <- c(letters[1:6])
-
-MatchTips(test.tree, test.shape)
-```
-
-We created a function, `MatchedTips()` to do most of the work (see utilities.R).
-```{r}
-# MatchedTips()$matched is a vector of indices matching the shape data to the tree with no duplicated/replicated entries of the tree. See more in utlities.R.
-MatchTips(aus.tree, unique(info.traits$FullName))
-
-info.tree <- info.traits[MatchTips(aus.tree$tip.label, info.means$FullName)$matched, ]
-
-shape.tree <- shape[ , , MatchTips(aus.tree$tip.label, dimnames(mean.shapes)[[3]])$matched]
-```
