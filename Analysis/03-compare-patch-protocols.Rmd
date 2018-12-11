@@ -71,12 +71,15 @@ PC1.var.plot <- procrustes.var.plot(big.hypothetical.1, big.hypothetical.2, col 
 **Repeat the steps immediately above for PC2**
 The pc.shapes[1] and [2] correspond to PC1min and PC1max. Therefore we can adjust the same big.wrap.PCA to plot the heatmaps for PC2. 
 ```{r}
+# Measure extremes of variation from mean on PC2
+big.PC2.var <- variation.range(big.gpagen.shape, return.ID = FALSE, axis = 2, ordination = ordination, type = "vector")  # can also try "spherical"
+
 # Select extreme specimens on PC2
 big.hypothetical.3 <- big.wrap.PCA$pc.shapes[[3]]  # PC2 min
 big.hypothetical.4 <- big.wrap.PCA$pc.shapes[[4]]  # PC2 max
 
 # Plot the range of variation along PC2 using a heat color scheme
-PC1.var.plot <- procrustes.var.plot(big.hypothetical.3, big.hypothetical.4, col = heat.colors, col.val = big.PC1.var[, "radius"], labels = F)
+PC2.var.plot <- procrustes.var.plot(big.hypothetical.3, big.hypothetical.4, col = heat.colors, col.val = big.PC2.var[, "length"], labels = F)  # use "radius" with "spherical" in line 75
 ```
 
 ## Repeat landmark variation heatmap for small patch protocol
@@ -115,12 +118,15 @@ The heatmaps provide a statistically rigorous way to visualize the relative vari
 **Make heatmap for small patch PC2**
 The pc.shapes[1] and [2] correspond to PC1min and PC1max. Therefore we can adjust the same sm.wrap.PCA to plot the heatmaps for PC2. 
 ```{r}
+# Measure extremes of variation from mean on PC2
+sm.PC2.var <- variation.range(big.gpagen.shape, return.ID = FALSE, axis = 2, ordination = ordination, type = "vector")  # can also try "spherical"
+
 # Select extreme specimens on PC2
 sm.hypothetical.3 <- sm.wrap.PCA$pc.shapes[[3]]  # PC2 min
 sm.hypothetical.4 <- sm.wrap.PCA$pc.shapes[[4]]  # PC2 max
 
 # Plot the range of variation along PC2 using a heat color scheme
-PC1.var.plot <- procrustes.var.plot(sm.hypothetical.3, sm.hypothetical.4, col = heat.colors, col.val = sm.PC1.var[, "radius"], labels = F)
+PC2.var.plot <- procrustes.var.plot(sm.hypothetical.3, sm.hypothetical.4, col = heat.colors, col.val = sm.PC2.var[, "length"], labels = F)  # use "radius" with "spherical" in line 121
 ```
 
 ### Compare histograms of landmark variation by protocol
@@ -226,9 +232,13 @@ The patch protocols look very similar on the PCAs, which suggests that they do n
 ### Run shape ~ genus * Csize ANOVAs on each protocol:  
 Big patch protocol:
 ```{r}
-gdf <- geomorph.data.frame(genus = big.info$EGenus, size = big.info$Csize)
+big.gdf <- geomorph.data.frame(shape = big.shape, genus = big.info$EGenus, csize = big.info$Csize)
 big.procD <- procD.lm(big.shape ~ size * genus, data = gdf)
 print(big.procD)
+
+# with procd.allomery
+big.Allo <- procD.allometry(shape ~ csize, ~ genus, logsz = TRUE, iter = 999, RRPP = TRUE, print.progress = TRUE, data = big.gdf)
+summary(big.Allo)
 ```
 
 Small patch protocol:
@@ -236,6 +246,11 @@ Small patch protocol:
 gdf <- geomorph.data.frame(genus = sm.info$EGenus, size = sm.info$Csize)
 sm.procD <- procD.lm(sm.shape ~ size * genus, data = gdf)
 print(sm.procD)
+
+# with procd.allomery
+sm.Allo <- procD.allometry(sm.shape ~ csize, ~ genus, logsz = TRUE, iter = 999, RRPP = TRUE, print.progress = TRUE, data = gdf)
+summary(sm.Allo)
+
 ```
 These ANOVAs are also very similar. Therefore, we decided to use only the small patch protocol as this protocol captured more information (sutures versus patch points) and had less asymmetry than the big patch protocol. It also resembles the more common method of landmarking.
 
