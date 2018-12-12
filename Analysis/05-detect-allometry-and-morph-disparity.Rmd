@@ -205,8 +205,7 @@ results.en
 Test with `dispRity` package if Rattus has greater diparity in the size-less morphospace given by the residual component of shape. Unlike the PCA above, the multivariate test below can consider all PC axes simulatenously. 
 ```{r}
 # Make lists to define old versus new endemics
-is.rat <- str_detect(info.traits$Genus, "Rat")
-new.endemics <- which(is.rat == TRUE)
+new.endemics <- which(str_detect(info.traits$Genus, "Rat") == TRUE)
 all.specimens <- c(1:dim(info.traits)[1])  # dummy list, length = max specimens
 old.endemics <- all.specimens[-new.endemics]  # process of elimination
 
@@ -221,6 +220,20 @@ Looks like there could be a statistically significant difference, let's test:
 # Test is from adonis function from vegan package which expects a distance matrix with method = Euclidean 
 test.dispRity(size.less.dispRity, test = adonis.dispRity)  
 ```
+
+```{r}
+# Run by wave
+first.wave <- which(info.traits$Wave == 1)
+sec.wave <- which(info.traits$Wave == 2)
+third.wave <- which(info.traits$Wave > 2)
+
+# Run dispRity test on median and centroid metrics (default)
+size.less.dispRity <- dispRity.per.group(Allo$RSC, list(First = first.wave, Second = sec.wave, Third = third.wave))
+summary(size.less.dispRity)
+plot(size.less.dispRity)
+```
+
+
 
 To address questions of evolution in Australia, we'll subset the data by natives.
 ```{r}

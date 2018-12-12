@@ -30,7 +30,7 @@ load(file = "../Data/Processed/02-main-data-both-protocols.rda")
 ```
 
 ## Landmark variation heatmaps
-Here we use Dr Thomas Guillerme's new package, `landvR` to see how landmarks vary within and between the two protocols. Much of the below is adapted from [this vignette written by Dr Guillerme](https://cdn.rawgit.com/TGuillerme/landvR/8a6a6bd5/inst/vignettes/Landmark_partition_test.html).
+Here we use Dr Thomas Guillerme's new package, `landvR` to see how landmarks vary within and between the two protocols. Much of the below was adapted from [this vignette written by Dr Guillerme](https://cdn.rawgit.com/TGuillerme/landvR/8a6a6bd5/inst/vignettes/Landmark_partition_test.html).
 ```{r}
 # Find mean configuration - i.e. mean shape in dataset
 big.consensus <- (select.procrustes(big.shape, selector = mean))[[1]]
@@ -82,7 +82,7 @@ big.hypothetical.4 <- big.wrap.PCA$pc.shapes[[4]]  # PC2 max
 PC2.var.plot <- procrustes.var.plot(big.hypothetical.3, big.hypothetical.4, col = heat.colors, col.val = big.PC2.var[, "length"], labels = F)  # use "radius" with "spherical" in line 75
 ```
 
-## Repeat landmark variation heatmap for small patch protocol
+## Repeat landmark variation heatmap for small patch protocol PC1 & PC2
 ```{r}
 # Find mean configuration - i.e. mean shape in dataset
 sm.consensus <- (select.procrustes(sm.shape, selector = mean))[[1]]
