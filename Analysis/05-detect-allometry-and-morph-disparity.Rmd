@@ -218,7 +218,7 @@ plot(size.less.dispRity)
 Looks like there could be a statistically significant difference, let's test:
 ```{r}
 # Test is from adonis function from vegan package which expects a distance matrix with method = Euclidean 
-test.dispRity(size.less.dispRity, test = adonis.dispRity)  
+test.dispRity(size.less.dispRity, test = t.test)  
 ```
 
 ```{r}
@@ -302,4 +302,21 @@ plot(x = log(Allo.clade$size),
      xlab = "Log centroid size", 
      ylab = "RegScore")
 legend(5.85, 0.06, legend = clade.names, col = col.clade.legend, pch = 16, cex = 0.78)
+```
+
+
+### Code with Emma
+```{r}
+spp.gdf <- geomorph.data.frame(shape = shape, spp = info.traits$Taxa, size = info$Csize)
+spp.results <- procD.allometry(shape ~ size, f2= ~spp, data = spp.gdf)
+
+
+size <- info$Csize
+spp <- info$Taxa
+pairwiseHOS.spp <- advanced.procD.lm(f1 = shape ~ log(size) + spp, 
+                                     f2 = ~ log(size) * spp, 
+                                     groups = ~ spp,  
+                                     slope = ~ log(size), 
+                                     angle.type = "deg")
+
 ```
