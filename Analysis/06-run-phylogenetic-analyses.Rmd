@@ -176,23 +176,30 @@ First, test for phylogenetic signal in the shape data.
 physignal(mean.shapes.tree, aus.tree)
 ```
 
-### Evolutionary allometry:
+### Evolutionary Allometry
 ```{r}
 # Centroid size only
 evo.allo.gdf <- geomorph.data.frame(shape = mean.shapes.tree, CS = info.means.tree$MeanCsize)
 evo.allo <- procD.pgls(shape ~CS, aus.tree, data = evo.allo.gdf)
 evo.allo
 
+# R squared for evolutionary allometry without genus interaction
+evo.allo$R2
+```
+
+### Evolutionary Allometry by Genus
+```{r}
 # Interaction with genus
 evo.allo.gen.gdf <- geomorph.data.frame(shape = mean.shapes.tree, CS = info.means.tree$MeanCsize, genus = info.means.tree$EGenus)
 evo.allo.gen <- procD.pgls(shape ~CS * genus, aus.tree, data = evo.allo.gen.gdf)
 evo.allo.gen
 
-# Example of a test of homogeneity of slopes, plus pairwise slopes comparisons
+# R squared for evolutionary allometry with genus
+evo.allo.gen$R2
+
+# Test of homogeneity of slopes, plus pairwise slopes comparisons
 HOS <- procD.pgls(f1 = shape ~ log(CS) * genus, aus.tree, data = evo.allo.gen.gdf)
-summary(HOS, formula = FALSE) # formulas too long to print
-
-
+summary(HOS, formula = FALSE)  # formulas too long to print
 ```
 
 **Historical Inference: Evolutionary transitions in size and shape**
