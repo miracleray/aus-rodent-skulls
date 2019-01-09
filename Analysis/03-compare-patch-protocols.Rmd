@@ -1,7 +1,7 @@
 ---
 title: "03-compare-patch-protocols"
 author: "Ariel Marcy"
-date: "10/15/2018"
+date: "2018-10-15"
 output: html_document
 ---
 
@@ -156,15 +156,15 @@ big.info$EGenus[which(big.info$Genus == "Mas")] <- "Pse"  # Mas is effectively P
 sm.info$EGenus <- sm.info$Genus
 sm.info$EGenus[which(sm.info$Genus == "Mas")] <- "Pse"  # Mas is effectively Pse
 
-# Colors by EGenus: Hyd Leg Lep Mel Mes Mus Not Pog Pse(+Mas) Rat Uro Xer Zyz
-col.gen <- c("red", "cornflowerblue", "light green", "yellow", "green", "grey", "blue", "magenta", "dark blue", "black", "darkgoldenrod4", "orange", "light blue")
+# Colors by EGenus: Con Hyd Leg Lep Mel Mes Mus Not Pog Pse(+Mas) Rat Uro Xer Zyz
+col.gen <- c("light green", "red", "cornflowerblue", "dark green", "yellow", "green", "grey", "blue", "magenta", "dark blue", "black", "darkgoldenrod4", "orange", "light blue")
 
 # Colors by specimen, ordered in same way as metadata
 sp.col.gen <- PlotByGroup(big.info, "EGenus", col.gen)  # is the same for big and small protocols, tested with all.equal()
 
 # Set color scheme for plot legends, taxa listed in order presented in phylogeny
-col.phylo <- c("yellow", "darkgoldenrod4", "green", "light green", "cornflowerblue", "light blue", "blue", "dark blue", "red", "orange", "magenta", "grey", "black")  # same as col.gen but in a different order
-gen.name.phylo <- c("Mel", "Uro", "Mes", "Lep", "Leg", "Zyz", "Not", "Pse", "Hyd", "Xer", "Pog", "Mus", "Rat")  # order of genera in phylogeny
+col.phylo <- c("yellow", "darkgoldenrod4", "dark green", "green", "light green", "cornflowerblue", "light blue", "blue", "dark blue", "red", "orange", "magenta", "grey", "black")  # same as col.gen but in a different order
+gen.name.phylo <- c("Mel", "Uro", "Con", "Mes", "Lep", "Leg", "Zyz", "Not", "Pse", "Hyd", "Xer", "Pog", "Mus", "Rat")  # order of genera in phylogeny
 ```
 
 ### PCA plot of big patch protocol
@@ -173,8 +173,8 @@ PCAs are very human-friendly way of visualizing shape variation in 2 dimensions.
 big.pca <- plotTangentSpace(big.shape, groups = sp.col.gen, axis1 = 1, axis2 = 2, verbose = T)
 
 # Flip PC1 and PC2 to show positive shape allometry (larger spp, larger values)
-big.pca$pc.scores[, "PC1"] <- -(big.pca$pc.scores[, "PC1"])
-big.pca$pc.scores[, "PC2"] <- -(big.pca$pc.scores[, "PC2"])
+#big.pca$pc.scores[, "PC1"] <- -(big.pca$pc.scores[, "PC1"])
+#big.pca$pc.scores[, "PC2"] <- -(big.pca$pc.scores[, "PC2"])
 
 # Get proportion of variance for PC1 and PC2 in format for plots
 big.PCs <- big.pca$pc.summary$importance
@@ -194,17 +194,17 @@ plot(x = big.pca$pc.scores[, 1],
      cex = 1.5, 
      cex.axis = 1.3, 
      cex.lab = 1.3)
-legend(0.15, 0.055, legend = gen.name.phylo, col = col.phylo, pch = 16, cex = 0.78)
+legend(0.16, 0.055, legend = gen.name.phylo, col = col.phylo, pch = 16, cex = 0.63)
 ```
 
 ### PCA plot of small patch protocol
 ```{r}
 # Plot PCAs
-sm.pca <- plotTangentSpace(sm.shape, groups = sp.col.gen, axis1 = 2, axis2 = 1, verbose = T)
+sm.pca <- plotTangentSpace(sm.shape, groups = sp.col.gen, axis1 = 1, axis2 = 2, verbose = T, label = sm.info$CatNum)
 
 # Flip PC1 and PC2 to show positive shape allometry (larger spp, larger values)
-sm.pca$pc.scores[, "PC1"] <- -(sm.pca$pc.scores[, "PC1"])
-sm.pca$pc.scores[, "PC2"] <- -(sm.pca$pc.scores[, "PC2"])
+#sm.pca$pc.scores[, "PC1"] <- -(sm.pca$pc.scores[, "PC1"])
+#sm.pca$pc.scores[, "PC2"] <- -(sm.pca$pc.scores[, "PC2"])
 
 # Get proportion of variance for PC1 and PC2 in format for plots
 sm.PCs <- sm.pca$pc.summary$importance
@@ -224,7 +224,7 @@ plot(x = sm.pca$pc.scores[, 1],
      cex = 1.5, 
      cex.axis = 1.3, 
      cex.lab = 1.3)
-legend(0.15, 0.055, legend = gen.name.phylo, col = col.phylo, pch = 16, cex = 0.78)
+legend(0.16, 0.055, legend = gen.name.phylo, col = col.phylo, pch = 16, cex = 0.63)
 ```
 
 ## Mantel test
@@ -232,7 +232,7 @@ A way to test if the two protocols provide a statistically significant different
 ```{r}
 mantel(dist(sm.pca$pc.scores), dist(big.pca$pc.scores))
 ```
-The Mantel test finds a highly significant (p < 0.001) relationship between the two PC score distance matrices, with statistic = 0.9989.
+The Mantel test finds a highly significant (p < 0.001) relationship between the two PC score distance matrices, with statistic = 0.9989. Meaning they are very similar distance matrices, as expected. 
 
 ## Compare performance of patch protocols in ANOVA by genus and centroid size
 The patch protocols look very similar on the PCAs, which suggests that they do not capture shape variation differently from one another. To test this, we performed a Procrustes ANOVA on shape ~ centroid size * genus.
