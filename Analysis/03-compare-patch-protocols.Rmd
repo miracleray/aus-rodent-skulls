@@ -24,6 +24,7 @@ if(!require(devtools)) install.packages("devtools")
 if(!require(dispRity)) install.packages("dispRity")
 if(!require(landvR)) install_github("TGuillerme/landvR")
 library(data.table)
+library(vegan)
 library(geomorph)
 source("../Functions/utilities.R")  # custom functions
 load(file = "../Data/Processed/02-main-data-both-protocols.rda")
@@ -225,6 +226,13 @@ plot(x = sm.pca$pc.scores[, 1],
      cex.lab = 1.3)
 legend(0.15, 0.055, legend = gen.name.phylo, col = col.phylo, pch = 16, cex = 0.78)
 ```
+
+## Mantel test
+A way to test if the two protocols provide a statistically significant different presentations of specimens.
+```{r}
+mantel(dist(sm.pca$pc.scores), dist(big.pca$pc.scores))
+```
+The Mantel test finds a highly significant (p < 0.001) relationship between the two PC score distance matrices, with statistic = 0.9989.
 
 ## Compare performance of patch protocols in ANOVA by genus and centroid size
 The patch protocols look very similar on the PCAs, which suggests that they do not capture shape variation differently from one another. To test this, we performed a Procrustes ANOVA on shape ~ centroid size * genus.
