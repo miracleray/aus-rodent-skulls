@@ -29,13 +29,8 @@ load(file = "../Data/Processed/01-bilat-data-w-ERR.rda")
 ## 1) Check for outliers and fix landmarking errors
 _geomorph_ comes with a handy function to check for outliers. Since our sample has a wide range of species, we decided to include the groups factor. This means the plotOutliers returns likely outliers for each genus instead of the group as a whole. When groups were not defined, only large species were returned as "outliers". 
 ```{r}
-# Plot outliers by genus for big patch dataset
-outliers <- plotOutliers(big.bY.shape, groups = big.sp.info$Genus, inspect.outliers = T)
-```
-
-Run again for the small patch protocol dataset:
-```{r}
-outliers <- plotOutliers(sm.bY.shape, groups = sm.sp.info$Genus, inspect.outliers = T)
+# Plot outliers by genus for small patch dataset
+outliers <- plotOutliers(sm.bY.shape, groups = sm.sp.info$Species, inspect.outliers = T)
 ```
 
 ### Visualize why they are outliers by looking at landmark vectors
@@ -46,11 +41,11 @@ Genus abbreviatons and number of outliers were inserted where needed for each ge
 We wrote a function, `MatchSpecShape()` to help us visualize outlier shape information. The function returns the 3D shape of specimen of interest. We can use it to compare the outliers to the median specimen in its genus.
 ```{r}
 # Get shape data for outliers indicated by plots above
-out.1 <- MatchSpecShape(outliers$Mel[1], sm.sp.info, sm.bY.shape)  # 1st outlier in genus Mel
+out.1 <- MatchSpecShape(outliers$Zyz[1], sm.sp.info, sm.bY.shape)  # 1st outlier in genus Mel
 out.2 <- MatchSpecShape(outliers$Mel[2], sm.sp.info, sm.bY.shape)  # 2nd outlier in genus Mel
 
 # Compare outlier specimens to median specimen
-med.spec <- outliers$Mel[median(outliers$Mel)]  # median specimen in Mel
+med.spec <- outliers$Uro[median(outliers$Uro)]  # median specimen in Mel
 med.shape <- MatchSpecShape(med.spec, sm.sp.info, sm.bY.shape)
 
 # Compare landmark locations in outlier specimens to median specimen
@@ -58,6 +53,32 @@ plotRefToTarget(med.shape, out.1, method = "vector", label = FALSE)
 plotRefToTarget(med.shape, out.2, method = "vector", label = FALSE)
 ```
 **Repeat the above for each genus/patch protocol as needed. When landmarking errors are found, fix in Viewbox, export new coordinates, and begin again from script 01.** 
+
+### ID outliers within genus Pseudomys
+To ID outliers within each species of the speciose genus Pseudomys, we needed to create shape and metadata files just for them so the `plotOutliers()` function can separate them. 
+```{r}
+# Isolate Pseudomys species
+is.Pse <- which(sm.sp.info$Species == "Pse")
+Pse.sm.shape <- sm.bY.shape[, , is.Pse]  # shape
+Pse.sm.info <- sm.sp.info[is.Pse, ]  # metadata
+
+# Run plotOutliers
+outliers.Pse <- plotOutliers(Pse.sm.shape, sm.sp.info$Species, inspect.outliers = TRUE)
+```
+
+### Remove 2 outliers from dataset
+Two specimens had major landmarking errors -- landmarks consistently placed in the wrong places. Therefore, we opted to remove these two specimens.
+```{r}
+# Find indices (same for both big and small datasets)
+rat.out <- which(sm.sp.info$CatNum == "C11381")  # Rattus norvegicus
+uro.out <- which(sm.sp.info$CatNum == "J17610")  # Uromys caudimaculatus
+
+# Remove from both big and small datasets
+sm.sp.info <- sm.sp.info[-c(rat.out, uro.out), ]
+big.sp.info <- big.sp.info[-c(rat.out, uro.out), ]
+sm.bY.shape <- sm.bY.shape[, , -c(rat.out, uro.out)]
+big.bY.shape <- big.bY.shape[, , -c(rat.out, uro.out)]
+```
 
 ## 2) Calculate intra-observer error
 Now that the shape data have been processed via GPA + bilateral symmetry and corrected for obvious landmarking errors, we can separate the data intended to measure user error from the main data for the remaining analyses. 

@@ -41,8 +41,8 @@ First, to reduce user error, AEM landmarked 20 specimens to familiarize herself 
 
 Viewbox puts the most recent specimen in the first row of the output .csv file, which is why we take the 20 initial specimens from the last rows of the coordinate dataset. 
 ```{r}
-coords.3D <- read.csv("../Data/Raw/19_01_08_3D_coords.csv", header = T)
-coords.3D <- coords.3D[1:(length(coords.3D) - 40)]  # removes 1st 20 specimens landmarked, with 2 protocols per specimen = 40
+coords.3D <- read.csv("../Data/Raw/19_01_09_RawData.csv", header = T)
+coords.3D <- coords.3D[1:(length(coords.3D) - 40)]  # removes first 20 specimens landmarked, with 2 protocols per specimen = 40
 ```
 _Note that the data is loaded in using a relative directory - not a `setwd()` command. This allows others who have cloned this repo of data and code to still use the code out of the box._
 
