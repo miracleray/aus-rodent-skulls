@@ -1,10 +1,10 @@
-# Australian rodent skull morphological diversification (Chapter 3 of Thesis) - data and code
+# Australian rodent skull morphological diversification (Chapter 4 of Thesis) - data and code
 Code author: Ariel E. Marcy
 
 To cite the paper and/or code:
 > Coming soonish
 
-As of December 2018, this is still a work in progress.
+As of January 2019, this is still a work in progress.
 
 After cloning this repo, remember to either set your working directory to the aus-rodent-skulls folder on your computer, or open an RStudio project from that folder.
 
